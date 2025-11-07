@@ -2,6 +2,7 @@ import React from 'react';
 import { ShoppingCart, Minus, Plus, Trash2, MessageCircle } from 'lucide-react';
 import { useCart } from './CartContext';
 import { Button } from './ui/button';
+import { CloudinaryImage } from './CloudinaryImage';
 import {
   Sheet,
   SheetContent,
@@ -42,10 +43,11 @@ export function Cart() {
                     key={item.id}
                     className="flex gap-4 py-4 border-b"
                   >
-                    <img
-                      src={item.image}
+                    <CloudinaryImage
+                      publicId={item.image}
                       alt={item.name}
-                      className="w-20 h-20 object-cover rounded"
+                      transformation="thumbnail"
+                      className="w-20 h-20 rounded"
                     />
                     <div className="flex-1">
                       <h3 className="font-medium">{item.name}</h3>
