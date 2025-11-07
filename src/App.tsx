@@ -7,6 +7,7 @@ import { Navbar } from './components/Navbar';
 import { Toaster } from 'sonner';
 import { CategorySection } from './components/CategorySection';
 import { Footer } from './components/Footer';
+import StoreMap from './components/StoreMap';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Hero />
         <FeaturedProducts />
         <CategorySection />
+        <StoreMap />
         <Footer />
         <Toaster />
       </div>
