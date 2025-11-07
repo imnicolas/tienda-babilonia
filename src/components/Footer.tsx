@@ -1,5 +1,5 @@
 import React from 'react';
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin, ShoppingBag } from 'lucide-react';
+import { Instagram, Mail, Phone, MapPin, ShoppingBag } from 'lucide-react';
 import { Separator } from './ui/separator';
 
 export function Footer() {
