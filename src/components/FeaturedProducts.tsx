@@ -3,48 +3,52 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { useCart, Product } from './CartContext';
 import { toast } from 'sonner';
+import { ProductImage } from './CloudinaryImage';
 
+// 🛍️ Productos de ejemplo
+// Nota: Las imágenes ahora se cargan desde Cloudinary
+// Formato del productId: nombre-del-producto (debe coincidir con el public_id en Cloudinary)
 const products: Product[] = [
   {
     id: 1,
     name: 'Zapatos Clásicos de Cuero',
     price: 89.99,
-    image: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=400&h=400&fit=crop',
+    image: 'zapatos-clasicos-cuero', // 🔄 Este será el public_id en Cloudinary
     category: 'hombres',
   },
   {
     id: 2,
     name: 'Zapatillas Deportivas',
     price: 119.99,
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop',
+    image: 'zapatillas-deportivas', // 🔄 Este será el public_id en Cloudinary
     category: 'deportivo',
   },
   {
     id: 3,
     name: 'Botas de Mujer Elegantes',
     price: 149.99,
-    image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&h=400&fit=crop',
+    image: 'botas-mujer-elegantes', // 🔄 Este será el public_id en Cloudinary
     category: 'mujeres',
   },
   {
     id: 4,
     name: 'Sandalias de Verano',
     price: 59.99,
-    image: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=400&h=400&fit=crop',
+    image: 'sandalias-verano', // 🔄 Este será el public_id en Cloudinary
     category: 'mujeres',
   },
   {
     id: 5,
     name: 'Zapatos Casuales',
     price: 79.99,
-    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop',
+    image: 'zapatos-casuales', // 🔄 Este será el public_id en Cloudinary
     category: 'hombres',
   },
   {
     id: 6,
     name: 'Zapatillas para Niños',
     price: 49.99,
-    image: 'https://images.unsplash.com/photo-1514989940723-e8e51635b782?w=400&h=400&fit=crop',
+    image: 'zapatillas-ninos', // 🔄 Este será el public_id en Cloudinary
     category: 'niños',
   },
 ];
@@ -70,10 +74,12 @@ export function FeaturedProducts() {
           {products.map((product) => (
             <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
-                <img
-                  src={product.image}
+                {/* 🖼️ Componente de imagen de Cloudinary con fallback automático */}
+                <ProductImage
+                  productId={product.image}
                   alt={product.name}
-                  className="w-full h-64 object-cover"
+                  size="card"
+                  className="w-full h-64"
                 />
                 <div className="p-4">
                   <h3 className="text-lg font-semibold mb-2">{product.name}</h3>

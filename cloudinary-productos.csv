@@ -1,0 +1,7 @@
+ID,Nombre del Producto,Public ID,Carpeta Completa,Precio,Categoría,URL de Verificación
+1,Zapatos Clásicos de Cuero,zapatos-clasicos-cuero,productos/zapatos-clasicos-cuero,$89.99,Hombres,https://res.cloudinary.com/drigawwbd/image/upload/productos/zapatos-clasicos-cuero
+2,Zapatillas Deportivas,zapatillas-deportivas,productos/zapatillas-deportivas,$119.99,Deportivo,https://res.cloudinary.com/drigawwbd/image/upload/productos/zapatillas-deportivas
+3,Botas de Mujer Elegantes,botas-mujer-elegantes,productos/botas-mujer-elegantes,$149.99,Mujeres,https://res.cloudinary.com/drigawwbd/image/upload/productos/botas-mujer-elegantes
+4,Sandalias de Verano,sandalias-verano,productos/sandalias-verano,$59.99,Mujeres,https://res.cloudinary.com/drigawwbd/image/upload/productos/sandalias-verano
+5,Zapatos Casuales,zapatos-casuales,productos/zapatos-casuales,$79.99,Hombres,https://res.cloudinary.com/drigawwbd/image/upload/productos/zapatos-casuales
+6,Zapatillas para Niños,zapatillas-ninos,productos/zapatillas-ninos,$49.99,Niños,https://res.cloudinary.com/drigawwbd/image/upload/productos/zapatillas-ninos
