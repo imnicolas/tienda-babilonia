@@ -6,49 +6,50 @@ import { toast } from 'sonner';
 import { ProductImage } from './CloudinaryImage';
 
 // 🛍️ Productos de ejemplo
-// Nota: Las imágenes ahora se cargan desde Cloudinary
-// Formato del productId: nombre-del-producto (debe coincidir con el public_id en Cloudinary)
+// Nota: Las imágenes se cargan desde Cloudinary
+// El Public ID es SOLO el nombre, sin carpetas (Cloudinary lo asigna así cuando subes sin especificar carpeta)
+// Ejemplo: 'zapatos-clasicos-cuero' (no 'productos/zapatos-clasicos-cuero')
 const products: Product[] = [
   {
     id: 1,
     name: 'Zapatos Clásicos de Cuero',
     price: 89.99,
-    image: 'zapatos-clasicos-cuero', // 🔄 Este será el public_id en Cloudinary
+    image: 'zapatos-clasicos-cuero', // Solo el nombre, sin carpeta
     category: 'hombres',
   },
   {
     id: 2,
     name: 'Zapatillas Deportivas',
     price: 119.99,
-    image: 'zapatillas-deportivas', // 🔄 Este será el public_id en Cloudinary
+    image: 'zapatillas-deportivas', // Solo el nombre, sin carpeta
     category: 'deportivo',
   },
   {
     id: 3,
     name: 'Botas de Mujer Elegantes',
     price: 149.99,
-    image: 'botas-mujer-elegantes', // 🔄 Este será el public_id en Cloudinary
+    image: 'botas-mujer-elegantes', // Solo el nombre, sin carpeta
     category: 'mujeres',
   },
   {
     id: 4,
     name: 'Sandalias de Verano',
     price: 59.99,
-    image: 'sandalias-verano', // 🔄 Este será el public_id en Cloudinary
+    image: 'sandalias-verano', // Solo el nombre, sin carpeta
     category: 'mujeres',
   },
   {
     id: 5,
     name: 'Zapatos Casuales',
     price: 79.99,
-    image: 'zapatos-casuales', // 🔄 Este será el public_id en Cloudinary
+    image: 'zapatos-casuales', // Solo el nombre, sin carpeta
     category: 'hombres',
   },
   {
     id: 6,
     name: 'Zapatillas para Niños',
     price: 49.99,
-    image: 'zapatillas-ninos', // 🔄 Este será el public_id en Cloudinary
+    image: 'zapatillas-ninos', // Solo el nombre, sin carpeta
     category: 'niños',
   },
 ];

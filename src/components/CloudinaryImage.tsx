@@ -110,8 +110,10 @@ export const ProductImage: React.FC<{
   size?: 'thumbnail' | 'card' | 'detail';
   className?: string;
 }> = ({ productId, alt, size = 'card', className }) => {
-  const folder = CLOUDINARY_CONFIG.folders.products;
-  const publicId = `${folder}/${productId}`;
+  // Cuando subes una imagen a la carpeta "productos/" en Cloudinary,
+  // el Public ID que Cloudinary asigna YA incluye la carpeta: "productos/zapatos-clasicos-cuero"
+  // Por lo tanto, aquí pasamos el productId directamente SIN agregar la carpeta
+  const publicId = productId;
   
   const transformationMap = {
     thumbnail: 'thumbnail',
@@ -135,8 +137,9 @@ export const CategoryImage: React.FC<{
   alt: string;
   className?: string;
 }> = ({ categoryId, alt, className }) => {
-  const folder = CLOUDINARY_CONFIG.folders.categories;
-  const publicId = `${folder}/${categoryId}`;
+  // Si subes dentro de la carpeta "categorias/" en Cloudinary,
+  // el categoryId debe incluir la carpeta: "categorias/hombres"
+  const publicId = categoryId;
 
   return (
     <CloudinaryImage
@@ -154,8 +157,9 @@ export const BannerImage: React.FC<{
   alt: string;
   className?: string;
 }> = ({ bannerId, alt, className }) => {
-  const folder = CLOUDINARY_CONFIG.folders.banners;
-  const publicId = `${folder}/${bannerId}`;
+  // Si subes dentro de la carpeta "banners/" en Cloudinary,
+  // el bannerId debe incluir la carpeta: "banners/hero-principal"
+  const publicId = bannerId;
 
   return (
     <CloudinaryImage
@@ -173,8 +177,9 @@ export const HeroImage: React.FC<{
   alt: string;
   className?: string;
 }> = ({ heroId, alt, className }) => {
-  const folder = CLOUDINARY_CONFIG.folders.banners;
-  const publicId = `${folder}/${heroId}`;
+  // Si subes dentro de la carpeta "banners/" en Cloudinary,
+  // el heroId debe incluir la carpeta: "banners/hero-principal"
+  const publicId = heroId;
 
   return (
     <CloudinaryImage

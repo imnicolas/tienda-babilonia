@@ -11,7 +11,7 @@ export const CLOUDINARY_CONFIG = {
   // Carpetas donde se organizarán las imágenes en Cloudinary
   // Nota: Nombres simples sin barras (/) para evitar errores en Cloudinary
   folders: {
-    products: 'productos',
+    products: 'Home/productos',
     categories: 'categorias',
     banners: 'banners',
     logos: 'logos'
@@ -19,46 +19,47 @@ export const CLOUDINARY_CONFIG = {
   
   // ⚙️ TRANSFORMACIONES PREDEFINIDAS
   // Optimizaciones comunes para diferentes usos
+  // Nota: Usar abreviaturas de Cloudinary (w, h, c, g, q, f)
   transformations: {
     thumbnail: {
-      width: 150,
-      height: 150,
-      crop: 'fill',
-      gravity: 'auto',
-      quality: 'auto',
-      fetch_format: 'auto'
+      w: 150,
+      h: 150,
+      c: 'fill',
+      g: 'auto',
+      q: 'auto',
+      f: 'auto'
     },
     productCard: {
-      width: 400,
-      height: 400,
-      crop: 'fill',
-      gravity: 'auto',
-      quality: 'auto',
-      fetch_format: 'auto'
+      w: 400,
+      h: 400,
+      c: 'fill',
+      g: 'auto',
+      q: 'auto',
+      f: 'auto'
     },
     productDetail: {
-      width: 800,
-      height: 800,
-      crop: 'fill',
-      gravity: 'auto',
-      quality: 'auto',
-      fetch_format: 'auto'
+      w: 800,
+      h: 800,
+      c: 'fill',
+      g: 'auto',
+      q: 'auto',
+      f: 'auto'
     },
     banner: {
-      width: 1920,
-      height: 600,
-      crop: 'fill',
-      gravity: 'auto',
-      quality: 'auto',
-      fetch_format: 'auto'
+      w: 1920,
+      h: 600,
+      c: 'fill',
+      g: 'auto',
+      q: 'auto',
+      f: 'auto'
     },
     hero: {
-      width: 1920,
-      height: 800,
-      crop: 'fill',
-      gravity: 'center',
-      quality: 'auto',
-      fetch_format: 'auto'
+      w: 1920,
+      h: 800,
+      c: 'fill',
+      g: 'center',
+      q: 'auto',
+      f: 'auto'
     }
   }
 };
