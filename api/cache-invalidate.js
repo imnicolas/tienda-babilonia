@@ -20,7 +20,6 @@ module.exports = async (req, res) => {
   try {
     // En Vercel, las serverless functions son stateless
     // Este endpoint existe principalmente para compatibilidad con desarrollo local
-    console.log('🔄 Cache invalidation request received');
     
     res.status(200).json({
       success: true,

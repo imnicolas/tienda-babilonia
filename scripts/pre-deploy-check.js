@@ -8,7 +8,6 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('\n🔍 Verificando configuración para deploy...\n');
 
 let hasErrors = false;
 
@@ -24,7 +23,6 @@ const criticalFiles = [
   '.gitignore'
 ];
 
-console.log('📁 Verificando archivos críticos...');
 criticalFiles.forEach(file => {
   const filePath = path.join(__dirname, '..', file);
   if (fs.existsSync(filePath)) {

@@ -200,14 +200,10 @@ export function generateSlug(title: string): string {
  */
 export async function getAllImages(category?: ProductCategory): Promise<ProductData[]> {
   try {
-    console.log('🔍 [cloudinaryUpload] Consultando imágenes desde Cloudinary (via backend)...');
-    console.log('🏷️ [cloudinaryUpload] Categoría recibida:', category);
-    
     // Convertir categoría de "Home/nombre" a "nombre" para la API
     let apiCategory: string | undefined;
     if (category) {
       apiCategory = category.replace('Home/', '');
-      console.log('🔄 [cloudinaryUpload] Categoría convertida para API:', apiCategory);
     }
     
     // Usar el backend (local o Vercel) con filtro de categoría si se proporciona
@@ -215,29 +211,17 @@ export async function getAllImages(category?: ProductCategory): Promise<ProductD
       ? `${API_BASE_URL}/api/products?category=${apiCategory}`
       : `${API_BASE_URL}/api/products`;
     
-    console.log('📡 [cloudinaryUpload] URL de consulta:', url);
-    
     const response = await fetch(url);
     
     if (!response.ok) {
-      console.warn('⚠️ No se pudo acceder al backend, usando cache local');
       return getProducts(category);
     }
 
     const data = await response.json();
     
     if (!data.success || !Array.isArray(data.products)) {
-      console.warn('⚠️ [cloudinaryUpload] Respuesta inválida del backend, usando cache local');
       return getProducts(category);
     }
-
-    console.log('✅ [cloudinaryUpload] Imágenes obtenidas de Cloudinary:', data.products.length);
-    console.log('📦 [cloudinaryUpload] Categoría en respuesta:', data.category);
-    console.log('🔍 [cloudinaryUpload] Primeros 3 productos:', data.products.slice(0, 3).map((p: any) => ({
-      id: p.id,
-      title: p.title,
-      category: p.category
-    })));
     
     const products: ProductData[] = data.products.map((product: any) => {
       // Si el título no viene parseado, parsearlo del public_id
@@ -267,14 +251,11 @@ export async function getAllImages(category?: ProductCategory): Promise<ProductD
     // Solo actualizar si no hay filtro de categoría (para no perder productos)
     if (!category) {
       localStorage.setItem('babilonia-products', JSON.stringify(products));
-      console.log('💾 [cloudinaryUpload] localStorage actualizado con', products.length, 'productos');
     }
     
-    console.log('✅ [cloudinaryUpload] Retornando', products.length, 'productos al componente');
     return products;
   } catch (error) {
     console.error('❌ Error obteniendo imágenes de Cloudinary:', error);
-    console.log('📦 Usando cache local como fallback');
     return getProducts(category);
   }
 }
@@ -311,18 +292,15 @@ export async function fetchCloudinaryImages(): Promise<CloudinaryImage[]> {
  */
 export async function invalidateBackendCache(): Promise<void> {
   try {
-    console.log('🔄 Invalidando caché del backend...');
     const response = await fetch(`${API_BASE_URL}/api/cache/invalidate`, {
       method: 'POST',
     });
     
-    if (response.ok) {
-      console.log('✅ Caché del backend invalidado');
-    } else {
-      console.warn('⚠️ No se pudo invalidar el caché del backend');
+    if (!response.ok) {
+      // Silently fail
     }
   } catch (error) {
-    console.warn('⚠️ Error al invalidar caché del backend:', error);
+    // Silently fail - cache will expire naturally
   }
 }
 
@@ -331,22 +309,18 @@ export async function invalidateBackendCache(): Promise<void> {
  */
 export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
   try {
-    console.log('🗑️ Eliminando de Cloudinary:', publicId);
-    
     // Usar el backend (local o Vercel)
     const response = await fetch(`${API_BASE_URL}/api/products/${publicId}`, {
       method: 'DELETE',
     });
     
     if (!response.ok) {
-      console.error('❌ Error al eliminar de Cloudinary');
       return false;
     }
 
     const data = await response.json();
     
     if (data.success) {
-      console.log('✅ Eliminado de Cloudinary exitosamente');
       
       // También eliminar de localStorage
       const products = getProducts();

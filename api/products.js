@@ -45,9 +45,7 @@ module.exports = async (req, res) => {
     // Obtener parámetro de categoría si existe
     const { category } = req.query;
     
-    console.log('📋 Consultando productos desde Cloudinary...');
     if (category) {
-      console.log(`🏷️ Filtrando por categoría: ${category}`);
     }
 
     // Si se especifica categoría, convertir a ruta completa de Cloudinary
@@ -59,7 +57,6 @@ module.exports = async (req, res) => {
       prefix = 'Home/';
     }
 
-    console.log(`🔍 Buscando con prefix: "${prefix}"`);
 
     // Obtener recursos con el prefix o folder específico
     const result = await cloudinary.api.resources({
@@ -69,7 +66,6 @@ module.exports = async (req, res) => {
       resource_type: 'image',
     });
 
-    console.log(`✅ ${result.resources.length} imágenes encontradas en Cloudinary`);
 
     // Filtrar y parsear productos
     const products = result.resources
@@ -83,7 +79,6 @@ module.exports = async (req, res) => {
           const resourceCategory = `${parts[0]}/${parts[1]}`; // ej: "Home/hombres"
           const expectedCategory = CATEGORY_PATHS[category]; // ej: "Home/miscelanea"
           if (resourceCategory !== expectedCategory) {
-            console.log(`🚫 Rechazando ${resource.public_id} - esperaba ${expectedCategory}, obtuvo ${resourceCategory}`);
             return false;
           }
         }
@@ -135,16 +130,6 @@ module.exports = async (req, res) => {
           format: resource.format,
         };
       });
-
-    console.log(`📦 ${products.length} productos parseados correctamente`);
-    
-    // Log de debug: mostrar qué productos se están retornando
-    if (category) {
-      console.log(`🔍 Productos filtrados para categoría "${category}":`);
-      products.forEach(p => {
-        console.log(`  - ${p.id} (categoria: ${p.category})`);
-      });
-    }
 
     res.status(200).json({
       success: true,

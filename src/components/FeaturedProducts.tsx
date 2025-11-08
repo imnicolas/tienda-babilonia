@@ -30,15 +30,6 @@ const CATEGORY_LABELS: Record<ProductCategory | 'all', string> = {
   [PRODUCT_CATEGORIES.MISCELANEA]: 'Miscelánea',
 };
 
-// Mapeo de categorías para el API (sin el prefijo Home/)
-const CATEGORY_API_NAMES: Record<ProductCategory, string> = {
-  [PRODUCT_CATEGORIES.HOMBRES]: 'hombres',
-  [PRODUCT_CATEGORIES.MUJERES]: 'mujeres',
-  [PRODUCT_CATEGORIES.NINOS]: 'ninos',
-  [PRODUCT_CATEGORIES.DEPORTIVOS]: 'deportivos',
-  [PRODUCT_CATEGORIES.MISCELANEA]: 'miscelanea',
-};
-
 /**
  * Convierte ProductData (de localStorage) a Product (del carrito)
  */
@@ -78,24 +69,15 @@ export function FeaturedProducts() {
   // Cargar productos desde Cloudinary
   useEffect(() => {
     const loadProducts = async () => {
-      console.log('🔄 [FeaturedProducts] Iniciando carga de productos...');
-      console.log('🏷️ [FeaturedProducts] Categoría seleccionada actual:', selectedCategory);
-      
       // 1. PRIMERO: Consultar Cloudinary para obtener todas las imágenes
       // Si hay categoría seleccionada, filtrar por ella
       const category = selectedCategory !== 'all' ? selectedCategory : undefined;
-      console.log('📤 [FeaturedProducts] Enviando categoría a getAllImages:', category);
       
       const cloudinaryProducts = await getAllImages(category);
-      
-      console.log('📦 [FeaturedProducts] Productos recibidos de Cloudinary:', cloudinaryProducts.length);
       
       // 2. Convertir a formato Product para renderizar
       const converted = cloudinaryProducts.map(convertToProduct);
       setProducts(converted);
-      
-      console.log('✅ [FeaturedProducts] Productos convertidos y cargados en estado:', converted.length);
-      console.log('📋 [FeaturedProducts] IDs de productos:', converted.map(p => p.id));
     };
 
     loadProducts();
@@ -105,7 +87,6 @@ export function FeaturedProducts() {
   useEffect(() => {
     // Evento personalizado para recargar productos cuando se agregue/elimine
     const handleProductsChange = () => {
-      console.log('🔔 [Event] Evento products-changed detectado');
       // Forzar recarga completa sin filtro
       setSelectedCategory('all');
     };
@@ -113,7 +94,6 @@ export function FeaturedProducts() {
     // Evento personalizado para filtrar por categoría desde CategorySection
     const handleCategorySelected = (event: Event) => {
       const customEvent = event as CustomEvent<{ category: ProductCategory }>;
-      console.log('🏷️ [Event] Categoría seleccionada desde CategorySection:', customEvent.detail.category);
       setSelectedCategory(customEvent.detail.category);
     };
 
@@ -253,7 +233,6 @@ export function FeaturedProducts() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {products.map((product) => {
-                console.log('🎨 [Render] Renderizando producto:', product.id, product.name);
                 return (
                   <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow relative">
                     {/* Botón de eliminar - Solo visible en modo admin */}

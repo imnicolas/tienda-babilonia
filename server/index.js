@@ -56,7 +56,6 @@ app.get('/api/products', async (req, res) => {
     
     // Si el caché es válido Y no hay filtro de categoría, devolver productos en caché
     if (isCacheValid() && !category) {
-      console.log('✨ Devolviendo productos desde caché');
       return res.json({
         success: true,
         count: productsCache.length,
@@ -65,7 +64,6 @@ app.get('/api/products', async (req, res) => {
       });
     }
 
-    console.log('📋 Consultando productos desde Cloudinary...');
     if (category) {
       console.log(`🏷️ Filtrando por categoría: ${category}`);
     }
@@ -79,7 +77,6 @@ app.get('/api/products', async (req, res) => {
       prefix = 'Home/';
     }
 
-    console.log(`🔍 Buscando con prefix: "${prefix}"`);
 
     // Obtener recursos con el prefix o folder específico
     const result = await cloudinary.api.resources({
@@ -88,8 +85,6 @@ app.get('/api/products', async (req, res) => {
       max_results: 500,
       resource_type: 'image',
     });
-
-    console.log(`✅ ${result.resources.length} imágenes encontradas en Cloudinary`);
 
     // Filtrar y parsear productos
     const products = result.resources
@@ -156,7 +151,6 @@ app.get('/api/products', async (req, res) => {
         };
       });
 
-    console.log(`📦 ${products.length} productos parseados correctamente`);
     
     // Log de debug: mostrar qué productos se están retornando
     if (category) {
@@ -195,7 +189,6 @@ app.get('/api/products', async (req, res) => {
 app.delete('/api/products/:publicId', async (req, res) => {
   try {
     const { publicId } = req.params;
-    console.log(`🗑️ Eliminando producto: ${publicId}`);
 
     // Eliminar de Cloudinary
     const result = await cloudinary.uploader.destroy(publicId);
@@ -303,7 +296,6 @@ app.get('/api/health', (req, res) => {
 app.post('/api/cache/invalidate', (req, res) => {
   productsCache = null;
   cacheTimestamp = null;
-  console.log('🗑️ Caché invalidado manualmente');
   
   res.json({
     success: true,

@@ -34,13 +34,11 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log(`🗑️ Eliminando producto: ${publicId}`);
 
     // Eliminar de Cloudinary
     const result = await cloudinary.uploader.destroy(publicId);
 
     if (result.result === 'ok') {
-      console.log(`✅ Producto eliminado: ${publicId}`);
       res.status(200).json({
         success: true,
         message: 'Producto eliminado exitosamente',
