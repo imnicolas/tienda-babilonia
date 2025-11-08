@@ -5,8 +5,9 @@ import { toast } from 'sonner';
 import {
   uploadToCloudinary,
   saveProduct,
-  generateSlug,
+  generateProductSlug,
   ProductData,
+  getAllImages,
 } from '../services/cloudinaryUpload';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -86,8 +87,8 @@ export function ProductUploader() {
     setIsUploading(true);
 
     try {
-      // 1. Generar slug para el public_id
-      const slug = generateSlug(formData.title);
+      // 1. Generar slug con título y precio (formato: titulo-precio)
+      const slug = generateProductSlug(formData.title, parseFloat(formData.price));
       
       // 2. Subir imagen a Cloudinary
       toast.loading('Subiendo imagen a Cloudinary...', { id: 'upload' });
@@ -106,14 +107,19 @@ export function ProductUploader() {
       // 4. Guardar en localStorage
       saveProduct(newProduct);
 
+      // 5. Sincronizar con Cloudinary (refrescar desde la fuente de verdad)
+      toast.loading('Sincronizando con Cloudinary...', { id: 'sync' });
+      await getAllImages();
+      toast.success('Producto sincronizado', { id: 'sync' });
+
       toast.success('¡Producto creado exitosamente!', { id: 'upload' });
 
-      // 5. Resetear formulario
+      // 6. Resetear formulario
       setFormData({ title: '', description: '', price: '' });
       setSelectedFile(null);
       setPreviewUrl(null);
 
-      // 6. Redirigir al home después de 2 segundos
+      // 7. Redirigir al home después de 2 segundos
       setTimeout(() => {
         navigate('/');
       }, 2000);
@@ -255,17 +261,20 @@ export function ProductUploader() {
               </div>
 
               {/* Preview del Public ID */}
-              {formData.title && (
+              {formData.title && formData.price && (
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-start gap-2">
                     <ImageIcon className="w-5 h-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900 mb-1">
                         Public ID en Cloudinary:
                       </p>
-                      <code className="text-sm text-blue-700">
-                        {generateSlug(formData.title)}
+                      <code className="text-sm text-blue-700 block mb-2">
+                        {generateProductSlug(formData.title, parseFloat(formData.price))}
                       </code>
+                      <p className="text-xs text-gray-600">
+                        Formato: <strong>título-precio</strong> (el precio se guarda como parte del ID)
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -1,66 +1,25 @@
 import React, { useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { useCart, Product } from './CartContext';
 import { toast } from 'sonner';
 import { ProductImage } from './CloudinaryImage';
-import { getProducts, ProductData } from '../services/cloudinaryUpload';
-
-// 🛍️ Productos de ejemplo (estáticos)
-// Nota: Las imágenes se cargan desde Cloudinary
-// El Public ID es SOLO el nombre, sin carpetas (Cloudinary lo asigna así cuando subes sin especificar carpeta)
-// Ejemplo: 'zapatos-clasicos-cuero' (no 'productos/zapatos-clasicos-cuero')
-const staticProducts: Product[] = [
-  {
-    id: 1,
-    name: 'Zapatos Clásicos de Cuero',
-    price: 89.99,
-    image: 'zapatos-clasicos-cuero', // Solo el nombre, sin carpeta
-    category: 'hombres',
-  },
-  {
-    id: 2,
-    name: 'Zapatillas Deportivas',
-    price: 119.99,
-    image: 'zapatillas-deportivas', // Solo el nombre, sin carpeta
-    category: 'deportivo',
-  },
-  {
-    id: 3,
-    name: 'Botas de Mujer Elegantes',
-    price: 149.99,
-    image: 'botas-mujer-elegantes', // Solo el nombre, sin carpeta
-    category: 'mujeres',
-  },
-  {
-    id: 4,
-    name: 'Sandalias de Verano',
-    price: 59.99,
-    image: 'sandalias-verano', // Solo el nombre, sin carpeta
-    category: 'mujeres',
-  },
-  {
-    id: 5,
-    name: 'Zapatos Casuales',
-    price: 79.99,
-    image: 'zapatos-casuales', // Solo el nombre, sin carpeta
-    category: 'hombres',
-  },
-  {
-    id: 6,
-    name: 'Zapatillas para Niños',
-    price: 49.99,
-    image: 'zapatillas-ninos', // Solo el nombre, sin carpeta
-    category: 'niños',
-  },
-];
+import { 
+  ProductData, 
+  deleteFromCloudinary,
+  getAllImages
+} from '../services/cloudinaryUpload';
 
 /**
  * Convierte ProductData (de localStorage) a Product (del carrito)
  */
 function convertToProduct(productData: ProductData): Product {
+  // Generar un ID numérico único basado en el publicId
+  const numericId = generateNumericId(productData.id);
+  
   return {
-    id: parseInt(productData.id),
+    id: numericId,
     name: productData.title,
     price: productData.price,
     image: productData.image,
@@ -68,39 +27,75 @@ function convertToProduct(productData: ProductData): Product {
   };
 }
 
+/**
+ * Genera un ID numérico único a partir de un string
+ */
+function generateNumericId(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+}
+
 export function FeaturedProducts() {
   const { addToCart } = useCart();
-  const [dynamicProducts, setDynamicProducts] = useState<Product[]>([]);
-  const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [showAdminButtons, setShowAdminButtons] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Cargar productos dinámicos desde localStorage
+  // Cargar productos desde Cloudinary al inicio
   useEffect(() => {
-    const loadDynamicProducts = () => {
-      const savedProducts = getProducts();
-      const converted = savedProducts.map(convertToProduct);
-      setDynamicProducts(converted);
+    const loadProducts = async () => {
+      console.log('🔄 Iniciando carga de productos...');
       
-      // Combinar productos estáticos con dinámicos
-      // Los productos dinámicos aparecen primero
-      setAllProducts([...converted, ...staticProducts]);
+      // 1. PRIMERO: Consultar Cloudinary para obtener todas las imágenes
+      const cloudinaryProducts = await getAllImages();
+      
+      // 2. Convertir a formato Product para renderizar
+      const converted = cloudinaryProducts.map(convertToProduct);
+      setProducts(converted);
+      
+      console.log('✅ Productos cargados:', converted.length);
     };
 
-    loadDynamicProducts();
+    // Ejecutar al montar el componente
+    loadProducts();
 
-    // Listener para actualizar cuando se agregue un producto nuevo
+    // Listener para actualizar cuando se agregue/elimine un producto
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'babilonia-products') {
-        loadDynamicProducts();
+        loadProducts();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
 
-    // También escuchar cambios en la misma pestaña
-    const interval = setInterval(loadDynamicProducts, 1000);
+    // Polling cada 30 segundos para mantener sincronizado (reducido de 5s)
+    // El backend tiene caché de 60s, así que esto es eficiente
+    const interval = setInterval(loadProducts, 30000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Verificar modo admin
+  useEffect(() => {
+    const checkAdminMode = () => {
+      const modo = localStorage.getItem('modo');
+      setShowAdminButtons(modo === 'poupe');
+    };
+
+    checkAdminMode();
+    window.addEventListener('storage', checkAdminMode);
+    const interval = setInterval(checkAdminMode, 1000);
+
+    return () => {
+      window.removeEventListener('storage', checkAdminMode);
       clearInterval(interval);
     };
   }, []);
@@ -113,6 +108,38 @@ export function FeaturedProducts() {
     });
   };
 
+  const handleDeleteProduct = async (product: Product) => {
+    // Confirmar eliminación
+    if (!window.confirm(`¿Eliminar "${product.name}"?\n\nEsta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setDeletingId(product.id);
+    toast.loading(`Eliminando ${product.name}...`, { id: 'delete' });
+
+    try {
+      // Eliminar de Cloudinary y localStorage
+      const success = await deleteFromCloudinary(product.image);
+
+      if (success) {
+        toast.success('Producto eliminado exitosamente', { id: 'delete' });
+        
+        // Actualizar lista localmente
+        setProducts(prev => prev.filter(p => p.id !== product.id));
+      } else {
+        throw new Error('No se pudo eliminar el producto');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Error al eliminar el producto',
+        { id: 'delete' }
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <section className="py-16 px-4 bg-gray-50" id="productos">
       <div className="container mx-auto">
@@ -120,40 +147,67 @@ export function FeaturedProducts() {
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
             Productos Destacados
           </h2>
-          {dynamicProducts.length > 0 && (
+          {products.length > 0 && (
             <p className="text-sm text-gray-600">
-              {dynamicProducts.length} producto{dynamicProducts.length !== 1 ? 's' : ''} nuevo{dynamicProducts.length !== 1 ? 's' : ''} agregado{dynamicProducts.length !== 1 ? 's' : ''}
+              {products.length} producto{products.length !== 1 ? 's' : ''} disponible{products.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {allProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                {/* 🖼️ Componente de imagen de Cloudinary con fallback automático */}
-                <ProductImage
-                  productId={product.image}
-                  alt={product.name}
-                  size="card"
-                  className="w-full h-64"
-                />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-                  <p className="text-2xl font-bold">${product.price.toFixed(2)}</p>
-                </div>
-              </CardContent>
-              <CardFooter className="p-4 pt-0">
-                <Button
-                  className="w-full"
-                  onClick={() => handleAddToCart(product)}
-                >
-                  Agregar al Carrito
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-4">
+              No hay productos disponibles
+            </p>
+            {showAdminButtons && (
+              <p className="text-sm text-gray-400">
+                Usa el botón "Crear Producto" en el navbar para agregar productos
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map((product) => (
+              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow relative">
+                {/* Botón de eliminar - Solo visible en modo admin */}
+                {showAdminButtons && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 z-10 shadow-lg"
+                    onClick={() => handleDeleteProduct(product)}
+                    disabled={deletingId === product.id}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+                
+                <CardContent className="p-0">
+                  {/* 🖼️ Componente de imagen de Cloudinary */}
+                  <ProductImage
+                    productId={product.image}
+                    alt={product.name}
+                    size="card"
+                    className="w-full h-64"
+                  />
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
+                    <p className="text-2xl font-bold text-green-600">${product.price.toFixed(2)}</p>
+                  </div>
+                </CardContent>
+                <CardFooter className="p-4 pt-0">
+                  <Button
+                    className="w-full"
+                    onClick={() => handleAddToCart(product)}
+                    disabled={deletingId === product.id}
+                  >
+                    Agregar al Carrito
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
