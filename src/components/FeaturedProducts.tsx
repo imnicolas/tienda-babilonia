@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { useCart, Product } from './CartContext';
 import { toast } from 'sonner';
 import { ProductImage } from './CloudinaryImage';
+import { getProducts, ProductData } from '../services/cloudinaryUpload';
 
-// 🛍️ Productos de ejemplo
+// 🛍️ Productos de ejemplo (estáticos)
 // Nota: Las imágenes se cargan desde Cloudinary
 // El Public ID es SOLO el nombre, sin carpetas (Cloudinary lo asigna así cuando subes sin especificar carpeta)
 // Ejemplo: 'zapatos-clasicos-cuero' (no 'productos/zapatos-clasicos-cuero')
-const products: Product[] = [
+const staticProducts: Product[] = [
   {
     id: 1,
     name: 'Zapatos Clásicos de Cuero',
@@ -54,8 +55,55 @@ const products: Product[] = [
   },
 ];
 
+/**
+ * Convierte ProductData (de localStorage) a Product (del carrito)
+ */
+function convertToProduct(productData: ProductData): Product {
+  return {
+    id: parseInt(productData.id),
+    name: productData.title,
+    price: productData.price,
+    image: productData.image,
+    category: 'general',
+  };
+}
+
 export function FeaturedProducts() {
   const { addToCart } = useCart();
+  const [dynamicProducts, setDynamicProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+
+  // Cargar productos dinámicos desde localStorage
+  useEffect(() => {
+    const loadDynamicProducts = () => {
+      const savedProducts = getProducts();
+      const converted = savedProducts.map(convertToProduct);
+      setDynamicProducts(converted);
+      
+      // Combinar productos estáticos con dinámicos
+      // Los productos dinámicos aparecen primero
+      setAllProducts([...converted, ...staticProducts]);
+    };
+
+    loadDynamicProducts();
+
+    // Listener para actualizar cuando se agregue un producto nuevo
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'babilonia-products') {
+        loadDynamicProducts();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // También escuchar cambios en la misma pestaña
+    const interval = setInterval(loadDynamicProducts, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
@@ -68,11 +116,19 @@ export function FeaturedProducts() {
   return (
     <section className="py-16 px-4 bg-gray-50" id="productos">
       <div className="container mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          Productos Destacados
-        </h2>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">
+            Productos Destacados
+          </h2>
+          {dynamicProducts.length > 0 && (
+            <p className="text-sm text-gray-600">
+              {dynamicProducts.length} producto{dynamicProducts.length !== 1 ? 's' : ''} nuevo{dynamicProducts.length !== 1 ? 's' : ''} agregado{dynamicProducts.length !== 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {products.map((product) => (
+          {allProducts.map((product) => (
             <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
                 {/* 🖼️ Componente de imagen de Cloudinary con fallback automático */}
