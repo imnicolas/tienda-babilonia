@@ -8,6 +8,7 @@ import {
   generateProductSlug,
   ProductData,
   getAllImages,
+  invalidateBackendCache,
 } from '../services/cloudinaryUpload';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -107,19 +108,25 @@ export function ProductUploader() {
       // 4. Guardar en localStorage
       saveProduct(newProduct);
 
-      // 5. Sincronizar con Cloudinary (refrescar desde la fuente de verdad)
+      // 5. Invalidar caché del backend
+      await invalidateBackendCache();
+
+      // 6. Sincronizar con Cloudinary (refrescar desde la fuente de verdad)
       toast.loading('Sincronizando con Cloudinary...', { id: 'sync' });
       await getAllImages();
       toast.success('Producto sincronizado', { id: 'sync' });
 
       toast.success('¡Producto creado exitosamente!', { id: 'upload' });
 
-      // 6. Resetear formulario
+      // 7. Disparar evento para notificar a otros componentes
+      window.dispatchEvent(new CustomEvent('products-changed'));
+
+      // 8. Resetear formulario
       setFormData({ title: '', description: '', price: '' });
       setSelectedFile(null);
       setPreviewUrl(null);
 
-      // 7. Redirigir al home después de 2 segundos
+      // 9. Redirigir al home después de 2 segundos
       setTimeout(() => {
         navigate('/');
       }, 2000);

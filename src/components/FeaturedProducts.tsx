@@ -61,25 +61,20 @@ export function FeaturedProducts() {
       console.log('✅ Productos cargados:', converted.length);
     };
 
-    // Ejecutar al montar el componente
+    // Ejecutar SOLO al montar el componente (primera carga)
     loadProducts();
 
-    // Listener para actualizar cuando se agregue/elimine un producto
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'babilonia-products') {
-        loadProducts();
-      }
+    // Evento personalizado para recargar productos cuando se agregue/elimine
+    const handleProductsChange = () => {
+      console.log('🔔 Evento de cambio detectado, recargando productos...');
+      loadProducts();
     };
 
-    window.addEventListener('storage', handleStorageChange);
-
-    // Polling cada 30 segundos para mantener sincronizado (reducido de 5s)
-    // El backend tiene caché de 60s, así que esto es eficiente
-    const interval = setInterval(loadProducts, 30000);
+    // Escuchar eventos personalizados de cambio de productos
+    window.addEventListener('products-changed', handleProductsChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
+      window.removeEventListener('products-changed', handleProductsChange);
     };
   }, []);
 
@@ -124,8 +119,11 @@ export function FeaturedProducts() {
       if (success) {
         toast.success('Producto eliminado exitosamente', { id: 'delete' });
         
-        // Actualizar lista localmente
+        // Actualizar lista localmente primero (para UX inmediata)
         setProducts(prev => prev.filter(p => p.id !== product.id));
+        
+        // Disparar evento para que otros componentes se enteren del cambio
+        window.dispatchEvent(new CustomEvent('products-changed'));
       } else {
         throw new Error('No se pudo eliminar el producto');
       }

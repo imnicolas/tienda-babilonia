@@ -22,7 +22,7 @@ app.use(express.json());
 // ======================================
 let productsCache = null;
 let cacheTimestamp = null;
-const CACHE_DURATION = 60 * 1000; // 60 segundos
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos (no hay polling, solo on-demand)
 
 function isCacheValid() {
   return productsCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION);
@@ -213,6 +213,26 @@ app.get('/api/health', (req, res) => {
       configured: !!(process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
       cloud_name: cloudinary.config().cloud_name,
     },
+    cache: {
+      active: !!productsCache,
+      age: cacheTimestamp ? Math.floor((Date.now() - cacheTimestamp) / 1000) : null,
+      expiresIn: cacheTimestamp ? Math.max(0, Math.floor((CACHE_DURATION - (Date.now() - cacheTimestamp)) / 1000)) : null,
+    },
+  });
+});
+
+// ======================================
+// 🔄 POST /api/cache/invalidate - Invalidar caché manualmente
+// ======================================
+app.post('/api/cache/invalidate', (req, res) => {
+  productsCache = null;
+  cacheTimestamp = null;
+  console.log('🗑️ Caché invalidado manualmente');
+  
+  res.json({
+    success: true,
+    message: 'Caché invalidado exitosamente',
+    timestamp: new Date().toISOString(),
   });
 });
 

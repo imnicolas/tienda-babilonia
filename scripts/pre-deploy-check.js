@@ -70,7 +70,11 @@ console.log('\n🔐 Verificando que archivos sensibles no estén en git...');
 const { execSync } = require('child_process');
 try {
   const trackedFiles = execSync('git ls-files', { encoding: 'utf8' });
-  if (trackedFiles.includes('.env')) {
+  // Verificar exactamente .env (no .env.example ni .env.production)
+  const envLines = trackedFiles.split('\n');
+  const hasEnv = envLines.some(line => line.trim() === '.env');
+  
+  if (hasEnv) {
     console.log('   ⚠️  .env está trackeado en git - ELIMINAR!');
     hasErrors = true;
   } else {

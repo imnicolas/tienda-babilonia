@@ -224,6 +224,26 @@ export async function fetchCloudinaryImages(): Promise<CloudinaryImage[]> {
 }
 
 /**
+ * Invalida el caché del backend para forzar una recarga desde Cloudinary
+ */
+export async function invalidateBackendCache(): Promise<void> {
+  try {
+    console.log('🔄 Invalidando caché del backend...');
+    const response = await fetch(`${API_BASE_URL}/api/cache/invalidate`, {
+      method: 'POST',
+    });
+    
+    if (response.ok) {
+      console.log('✅ Caché del backend invalidado');
+    } else {
+      console.warn('⚠️ No se pudo invalidar el caché del backend');
+    }
+  } catch (error) {
+    console.warn('⚠️ Error al invalidar caché del backend:', error);
+  }
+}
+
+/**
  * Elimina una imagen de Cloudinary usando el backend o Vercel Functions
  */
 export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
@@ -249,6 +269,9 @@ export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
       const products = getProducts();
       const filtered = products.filter(p => p.image !== publicId);
       localStorage.setItem('babilonia-products', JSON.stringify(filtered));
+      
+      // Invalidar caché del backend
+      await invalidateBackendCache();
       
       return true;
     }

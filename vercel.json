@@ -15,6 +15,10 @@
     {
       "source": "/api/products/:publicId",
       "destination": "/api/delete-product.js"
+    },
+    {
+      "source": "/api/cache/invalidate",
+      "destination": "/api/cache-invalidate.js"
     }
   ],
   "headers": [
