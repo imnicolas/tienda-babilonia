@@ -1,11 +1,39 @@
-import React from 'react';
-import { ShoppingBag, Search, Menu } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ShoppingBag, Search, Menu, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Cart } from './Cart';
 
 export function Navbar() {
+  const navigate = useNavigate();
   const navLinks = ["Inicio", "Hombres", "Mujeres", "Niños", "Ofertas", "Contacto"];
+  const [showAdminButton, setShowAdminButton] = useState(false);
+
+  // Verificar si existe 'modo' = 'poupe' en localStorage
+  useEffect(() => {
+    const checkAdminMode = () => {
+      const modo = localStorage.getItem('modo');
+      setShowAdminButton(modo === 'poupe');
+    };
+
+    checkAdminMode();
+
+    // Escuchar cambios en localStorage
+    window.addEventListener('storage', checkAdminMode);
+    
+    // Polling para detectar cambios en la misma pestaña
+    const interval = setInterval(checkAdminMode, 1000);
+
+    return () => {
+      window.removeEventListener('storage', checkAdminMode);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleCreateProduct = () => {
+    navigate('/argdev');
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
@@ -35,6 +63,20 @@ export function Navbar() {
             <Button variant="ghost" size="icon" className="hidden md:flex">
               <Search className="h-5 w-5" />
             </Button>
+            
+            {/* Botón Crear Producto - Solo visible en modo admin */}
+            {showAdminButton && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleCreateProduct}
+                className="hidden md:flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4" />
+                Crear Producto
+              </Button>
+            )}
+            
             <Cart />
 
             {/* Mobile Menu */}
@@ -55,6 +97,21 @@ export function Navbar() {
                       {link}
                     </a>
                   ))}
+                  
+                  {/* Botón móvil para crear producto */}
+                  {showAdminButton && (
+                    <>
+                      <div className="border-t my-4" />
+                      <Button
+                        variant="default"
+                        onClick={handleCreateProduct}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Crear Producto
+                      </Button>
+                    </>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
