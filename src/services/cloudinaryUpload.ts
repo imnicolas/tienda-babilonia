@@ -5,6 +5,18 @@ const UPLOAD_PRESET = 'babilonia-products'; // Unsigned preset
 // API Base URL - funciona tanto en desarrollo como en producción
 const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
+// Categorías disponibles en Cloudinary
+// IMPORTANTE: En Cloudinary las carpetas están dentro de "Home/"
+export const PRODUCT_CATEGORIES = {
+  HOMBRES: 'Home/hombres',
+  MUJERES: 'Home/mujeres',
+  NINOS: 'Home/ninos',
+  DEPORTIVOS: 'Home/deportivos',
+  MISCELANEA: 'Home/miscelanea',
+} as const;
+
+export type ProductCategory = typeof PRODUCT_CATEGORIES[keyof typeof PRODUCT_CATEGORIES];
+
 export interface UploadResult {
   publicId: string;
   secureUrl: string;
@@ -17,7 +29,8 @@ export interface ProductData {
   title: string;
   description: string;
   price: number;
-  image: string; // public_id de Cloudinary (formato: titulo-precio)
+  image: string; // public_id de Cloudinary (formato: categoria/titulo-precio)
+  category: ProductCategory; // Categoría del producto
   createdAt: string;
 }
 
@@ -39,16 +52,24 @@ export interface CloudinaryImage {
  * Sube una imagen a Cloudinary
  * @param file - Archivo de imagen a subir
  * @param publicId - ID público opcional para la imagen
+ * @param category - Categoría del producto (carpeta en Cloudinary)
  * @returns Promise con los datos de la imagen subida
  */
 export async function uploadToCloudinary(
   file: File,
-  publicId?: string
+  publicId?: string,
+  category?: ProductCategory
 ): Promise<UploadResult> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', UPLOAD_PRESET);
   
+  // IMPORTANTE: Usar 'folder' para crear jerarquía visual en Cloudinary
+  if (category) {
+    formData.append('folder', category);
+  }
+  
+  // El public_id es solo el nombre del archivo (sin ruta)
   if (publicId) {
     formData.append('public_id', publicId);
   }
@@ -102,15 +123,39 @@ export function generateProductSlug(title: string, price: number): string {
 }
 
 /**
- * Parsea un Public ID para extraer título y precio
- * Formato esperado: titulo-del-producto-12999
- * @returns {title, price} o null si no se puede parsear
+ * Parsea un Public ID para extraer título, precio y categoría
+ * Formato esperado: Home/categoria/titulo-del-producto-12999
+ * @returns {title, price, category} o null si no se puede parsear
  */
-export function parseProductId(publicId: string): { title: string; price: number } | null {
+export function parseProductId(publicId: string): { title: string; price: number; category: ProductCategory } | null {
   try {
-    // Buscar el último segmento numérico
-    const parts = publicId.split('-');
-    const lastPart = parts[parts.length - 1];
+    // Separar partes (formato: Home/categoria/titulo-precio)
+    const parts = publicId.split('/');
+    let category: ProductCategory = PRODUCT_CATEGORIES.MISCELANEA;
+    let productSlug = publicId;
+    
+    // Estructura esperada: Home/categoria/titulo-precio
+    if (parts.length >= 3 && parts[0] === 'Home') {
+      const categoryName = parts[1]; // ej: "hombres"
+      const fullCategoryPath = `Home/${categoryName}`;
+      
+      // Verificar si es una categoría válida
+      if (Object.values(PRODUCT_CATEGORIES).includes(fullCategoryPath as ProductCategory)) {
+        category = fullCategoryPath as ProductCategory;
+        productSlug = parts[parts.length - 1]; // Último segmento es el producto
+      }
+    } else if (parts.length === 2) {
+      // Formato con categoría sin Home: categoria/titulo-precio
+      const possibleCategory = `Home/${parts[0]}`;
+      if (Object.values(PRODUCT_CATEGORIES).includes(possibleCategory as ProductCategory)) {
+        category = possibleCategory as ProductCategory;
+        productSlug = parts[1];
+      }
+    }
+    
+    // Buscar el último segmento numérico del slug
+    const slugParts = productSlug.split('-');
+    const lastPart = slugParts[slugParts.length - 1];
     
     // Verificar si el último segmento es un número
     if (!/^\d+$/.test(lastPart)) {
@@ -122,12 +167,12 @@ export function parseProductId(publicId: string): { title: string; price: number
     const price = priceInCents / 100;
     
     // Extraer título (todo excepto el último segmento)
-    const titleParts = parts.slice(0, -1);
+    const titleParts = slugParts.slice(0, -1);
     const title = titleParts
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
     
-    return { title, price };
+    return { title, price, category };
   } catch (error) {
     console.error('Error parsing product ID:', publicId, error);
     return null;
@@ -151,48 +196,86 @@ export function generateSlug(title: string): string {
 /**
  * FUNCIÓN PRINCIPAL: Obtiene todas las imágenes desde Cloudinary
  * Esta función ahora usa el backend local o Vercel Serverless Functions
+ * @param category - Filtrar por categoría específica (opcional)
  */
-export async function getAllImages(): Promise<ProductData[]> {
+export async function getAllImages(category?: ProductCategory): Promise<ProductData[]> {
   try {
-    console.log('🔍 Consultando imágenes desde Cloudinary (via backend)...');
+    console.log('🔍 [cloudinaryUpload] Consultando imágenes desde Cloudinary (via backend)...');
+    console.log('🏷️ [cloudinaryUpload] Categoría recibida:', category);
     
-    // Usar el backend (local o Vercel)
-    const url = `${API_BASE_URL}/api/products`;
+    // Convertir categoría de "Home/nombre" a "nombre" para la API
+    let apiCategory: string | undefined;
+    if (category) {
+      apiCategory = category.replace('Home/', '');
+      console.log('🔄 [cloudinaryUpload] Categoría convertida para API:', apiCategory);
+    }
+    
+    // Usar el backend (local o Vercel) con filtro de categoría si se proporciona
+    const url = apiCategory 
+      ? `${API_BASE_URL}/api/products?category=${apiCategory}`
+      : `${API_BASE_URL}/api/products`;
+    
+    console.log('📡 [cloudinaryUpload] URL de consulta:', url);
     
     const response = await fetch(url);
     
     if (!response.ok) {
       console.warn('⚠️ No se pudo acceder al backend, usando cache local');
-      return getProducts();
+      return getProducts(category);
     }
 
     const data = await response.json();
     
     if (!data.success || !Array.isArray(data.products)) {
-      console.warn('⚠️ Respuesta inválida del backend, usando cache local');
-      return getProducts();
+      console.warn('⚠️ [cloudinaryUpload] Respuesta inválida del backend, usando cache local');
+      return getProducts(category);
     }
 
-    console.log('✅ Imágenes obtenidas de Cloudinary:', data.products.length);
+    console.log('✅ [cloudinaryUpload] Imágenes obtenidas de Cloudinary:', data.products.length);
+    console.log('📦 [cloudinaryUpload] Categoría en respuesta:', data.category);
+    console.log('🔍 [cloudinaryUpload] Primeros 3 productos:', data.products.slice(0, 3).map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      category: p.category
+    })));
     
-    const products: ProductData[] = data.products.map((product: any) => ({
-      id: product.id,
-      title: product.title,
-      description: product.description,
-      price: product.price,
-      image: product.image,
-      createdAt: product.createdAt,
-    }));
+    const products: ProductData[] = data.products.map((product: any) => {
+      // Si el título no viene parseado, parsearlo del public_id
+      let title = product.title;
+      if (!title || title.includes('/')) {
+        const parsed = parseProductId(product.image);
+        if (parsed) {
+          title = parsed.title;
+        }
+      }
+      
+      return {
+        id: product.id,
+        title: title,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        // Convertir categoría de "nombre" a "Home/nombre" (con validación)
+        category: (product.category && typeof product.category === 'string' && product.category.includes('Home/'))
+          ? product.category 
+          : `Home/${product.category || 'miscelanea'}` as ProductCategory,
+        createdAt: product.createdAt,
+      };
+    });
     
     // Sincronizar con localStorage (usar Cloudinary como fuente de verdad)
-    localStorage.setItem('babilonia-products', JSON.stringify(products));
-    console.log('💾 localStorage actualizado con', products.length, 'productos');
+    // Solo actualizar si no hay filtro de categoría (para no perder productos)
+    if (!category) {
+      localStorage.setItem('babilonia-products', JSON.stringify(products));
+      console.log('💾 [cloudinaryUpload] localStorage actualizado con', products.length, 'productos');
+    }
     
+    console.log('✅ [cloudinaryUpload] Retornando', products.length, 'productos al componente');
     return products;
   } catch (error) {
     console.error('❌ Error obteniendo imágenes de Cloudinary:', error);
     console.log('📦 Usando cache local como fallback');
-    return getProducts();
+    return getProducts(category);
   }
 }
 
@@ -294,13 +377,21 @@ export function saveProduct(product: ProductData): void {
 
 /**
  * Obtiene todos los productos guardados
+ * @param category - Filtrar por categoría específica (opcional)
  */
-export function getProducts(): ProductData[] {
+export function getProducts(category?: ProductCategory): ProductData[] {
   const data = localStorage.getItem('babilonia-products');
   if (!data) return [];
   
   try {
-    return JSON.parse(data);
+    const products: ProductData[] = JSON.parse(data);
+    
+    // Filtrar por categoría si se especifica
+    if (category) {
+      return products.filter(p => p.category === category);
+    }
+    
+    return products;
   } catch {
     return [];
   }

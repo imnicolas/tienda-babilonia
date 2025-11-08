@@ -9,12 +9,30 @@ import {
   ProductData,
   getAllImages,
   invalidateBackendCache,
+  PRODUCT_CATEGORIES,
+  ProductCategory,
 } from '../services/cloudinaryUpload';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+
+// Mapeo de nombres amigables para las categorías
+const CATEGORY_LABELS: Record<ProductCategory, string> = {
+  [PRODUCT_CATEGORIES.HOMBRES]: 'Hombres',
+  [PRODUCT_CATEGORIES.MUJERES]: 'Mujeres',
+  [PRODUCT_CATEGORIES.NINOS]: 'Niños',
+  [PRODUCT_CATEGORIES.DEPORTIVOS]: 'Deportivos',
+  [PRODUCT_CATEGORIES.MISCELANEA]: 'Miscelánea',
+};
 
 export function ProductUploader() {
   const navigate = useNavigate();
@@ -26,6 +44,7 @@ export function ProductUploader() {
     title: '',
     description: '',
     price: '',
+    category: PRODUCT_CATEGORIES.MISCELANEA as ProductCategory,
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,9 +110,9 @@ export function ProductUploader() {
       // 1. Generar slug con título y precio (formato: titulo-precio)
       const slug = generateProductSlug(formData.title, parseFloat(formData.price));
       
-      // 2. Subir imagen a Cloudinary
+      // 2. Subir imagen a Cloudinary con categoría
       toast.loading('Subiendo imagen a Cloudinary...', { id: 'upload' });
-      const uploadResult = await uploadToCloudinary(selectedFile, slug);
+      const uploadResult = await uploadToCloudinary(selectedFile, slug, formData.category);
       
       // 3. Crear objeto producto
       const newProduct: ProductData = {
@@ -102,6 +121,7 @@ export function ProductUploader() {
         description: formData.description.trim() || `${formData.title} - Calidad premium`,
         price: parseFloat(formData.price),
         image: uploadResult.publicId,
+        category: formData.category,
         createdAt: new Date().toISOString(),
       };
 
@@ -122,7 +142,12 @@ export function ProductUploader() {
       window.dispatchEvent(new CustomEvent('products-changed'));
 
       // 8. Resetear formulario
-      setFormData({ title: '', description: '', price: '' });
+      setFormData({ 
+        title: '', 
+        description: '', 
+        price: '',
+        category: PRODUCT_CATEGORIES.MISCELANEA,
+      });
       setSelectedFile(null);
       setPreviewUrl(null);
 
@@ -236,6 +261,32 @@ export function ProductUploader() {
                 </p>
               </div>
 
+              {/* Categoría */}
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoría *</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => 
+                    setFormData(prev => ({ ...prev, category: value as ProductCategory }))
+                  }
+                  disabled={isUploading}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Selecciona una categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Los productos se organizarán en carpetas por categoría en Cloudinary
+                </p>
+              </div>
+
               {/* Descripción */}
               <div className="space-y-2">
                 <Label htmlFor="description">Descripción (opcional)</Label>
@@ -277,10 +328,13 @@ export function ProductUploader() {
                         Public ID en Cloudinary:
                       </p>
                       <code className="text-sm text-blue-700 block mb-2">
-                        {generateProductSlug(formData.title, parseFloat(formData.price))}
+                        {formData.category}/{generateProductSlug(formData.title, parseFloat(formData.price))}
                       </code>
+                      <p className="text-xs text-gray-600 mb-1">
+                        Formato: <strong>categoría/título-precio</strong>
+                      </p>
                       <p className="text-xs text-gray-600">
-                        Formato: <strong>título-precio</strong> (el precio se guarda como parte del ID)
+                        Categoría: <strong>{CATEGORY_LABELS[formData.category]}</strong>
                       </p>
                     </div>
                   </div>

@@ -8,6 +8,24 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Categorías válidas (con prefijo Home/ según estructura de Cloudinary)
+const VALID_CATEGORIES = [
+  'Home/hombres', 
+  'Home/mujeres', 
+  'Home/ninos', 
+  'Home/deportivos', 
+  'Home/miscelanea'
+];
+
+// Mapeo de nombres cortos a rutas completas
+const CATEGORY_PATHS = {
+  'hombres': 'Home/hombres',
+  'mujeres': 'Home/mujeres',
+  'ninos': 'Home/ninos',
+  'deportivos': 'Home/deportivos',
+  'miscelanea': 'Home/miscelanea'
+};
+
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,44 +42,92 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Obtener parámetro de categoría si existe
+    const { category } = req.query;
+    
     console.log('📋 Consultando productos desde Cloudinary...');
+    if (category) {
+      console.log(`🏷️ Filtrando por categoría: ${category}`);
+    }
+
+    // Si se especifica categoría, convertir a ruta completa de Cloudinary
+    let prefix = '';
+    if (category && CATEGORY_PATHS[category]) {
+      prefix = `${CATEGORY_PATHS[category]}/`;
+    } else if (!category) {
+      // Sin categoría, buscar en toda la carpeta Home
+      prefix = 'Home/';
+    }
+
+    console.log(`🔍 Buscando con prefix: "${prefix}"`);
 
     // Obtener recursos con el prefix o folder específico
     const result = await cloudinary.api.resources({
       type: 'upload',
-      prefix: '', // Puedes cambiar esto si usas un folder específico
+      prefix: prefix,
       max_results: 500,
       resource_type: 'image',
     });
 
     console.log(`✅ ${result.resources.length} imágenes encontradas en Cloudinary`);
 
-    // Filtrar solo las que tengan el formato: titulo-precio
+    // Filtrar y parsear productos
     const products = result.resources
       .filter(resource => {
-        const parts = resource.public_id.split('-');
-        const lastPart = parts[parts.length - 1];
+        // Extraer el slug sin Home y categoría (formato: Home/categoria/titulo-precio)
+        const parts = resource.public_id.split('/');
+        if (parts.length < 3) return false; // Debe tener al menos: Home/categoria/producto
+        
+        // Si hay categoría seleccionada, validar que el recurso pertenezca a esa categoría
+        if (category && CATEGORY_PATHS[category]) {
+          const resourceCategory = `${parts[0]}/${parts[1]}`; // ej: "Home/hombres"
+          const expectedCategory = CATEGORY_PATHS[category]; // ej: "Home/miscelanea"
+          if (resourceCategory !== expectedCategory) {
+            console.log(`🚫 Rechazando ${resource.public_id} - esperaba ${expectedCategory}, obtuvo ${resourceCategory}`);
+            return false;
+          }
+        }
+        
+        const slug = parts[parts.length - 1]; // Último segmento es el producto
+        const slugParts = slug.split('-');
+        const lastPart = slugParts[slugParts.length - 1];
         return /^\d+$/.test(lastPart); // Último segmento debe ser numérico
       })
       .map(resource => {
         const publicId = resource.public_id;
         
-        // Parsear título y precio
-        const parts = publicId.split('-');
-        const priceInCents = parseInt(parts[parts.length - 1], 10);
+        // Parsear categoría, título y precio (formato: Home/categoria/titulo-precio)
+        const parts = publicId.split('/');
+        let category = 'miscelanea';
+        let slug = publicId;
+        
+        // Estructura esperada: Home/categoria/titulo-precio
+        if (parts.length >= 3 && parts[0] === 'Home') {
+          const categoryPath = parts[1]; // ej: "hombres"
+          category = categoryPath; // Usar solo el nombre de la categoría
+          slug = parts[parts.length - 1]; // Último segmento es el producto
+        } else if (parts.length === 2) {
+          // Formato legacy: categoria/titulo-precio
+          category = parts[0].replace('Home/', '');
+          slug = parts[1];
+        }
+        
+        const slugParts = slug.split('-');
+        const priceInCents = parseInt(slugParts[slugParts.length - 1], 10);
         const price = priceInCents / 100;
         
-        const titleParts = parts.slice(0, -1);
+        const titleParts = slugParts.slice(0, -1);
         const title = titleParts
           .map(word => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
 
         return {
           id: publicId,
-          title: title,
+          title: title, // Solo el título parseado, NO el public_id
           description: `${title} - Producto de calidad`,
           price: price,
           image: publicId,
+          category: category,
           createdAt: resource.created_at,
           url: resource.secure_url,
           width: resource.width,
@@ -71,11 +137,20 @@ module.exports = async (req, res) => {
       });
 
     console.log(`📦 ${products.length} productos parseados correctamente`);
+    
+    // Log de debug: mostrar qué productos se están retornando
+    if (category) {
+      console.log(`🔍 Productos filtrados para categoría "${category}":`);
+      products.forEach(p => {
+        console.log(`  - ${p.id} (categoria: ${p.category})`);
+      });
+    }
 
     res.status(200).json({
       success: true,
       count: products.length,
       products: products,
+      ...(category && { category }), // Incluir categoría filtrada en respuesta
     });
 
   } catch (error) {

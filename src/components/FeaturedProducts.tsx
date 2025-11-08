@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Filter, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { useCart, Product } from './CartContext';
@@ -8,8 +8,36 @@ import { ProductImage } from './CloudinaryImage';
 import { 
   ProductData, 
   deleteFromCloudinary,
-  getAllImages
+  getAllImages,
+  PRODUCT_CATEGORIES,
+  ProductCategory,
 } from '../services/cloudinaryUpload';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+
+// Mapeo de nombres amigables para las categorías
+const CATEGORY_LABELS: Record<ProductCategory | 'all', string> = {
+  all: 'Todas las categorías',
+  [PRODUCT_CATEGORIES.HOMBRES]: 'Hombres',
+  [PRODUCT_CATEGORIES.MUJERES]: 'Mujeres',
+  [PRODUCT_CATEGORIES.NINOS]: 'Niños',
+  [PRODUCT_CATEGORIES.DEPORTIVOS]: 'Deportivos',
+  [PRODUCT_CATEGORIES.MISCELANEA]: 'Miscelánea',
+};
+
+// Mapeo de categorías para el API (sin el prefijo Home/)
+const CATEGORY_API_NAMES: Record<ProductCategory, string> = {
+  [PRODUCT_CATEGORIES.HOMBRES]: 'hombres',
+  [PRODUCT_CATEGORIES.MUJERES]: 'mujeres',
+  [PRODUCT_CATEGORIES.NINOS]: 'ninos',
+  [PRODUCT_CATEGORIES.DEPORTIVOS]: 'deportivos',
+  [PRODUCT_CATEGORIES.MISCELANEA]: 'miscelanea',
+};
 
 /**
  * Convierte ProductData (de localStorage) a Product (del carrito)
@@ -45,38 +73,59 @@ export function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [showAdminButtons, setShowAdminButtons] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all');
 
-  // Cargar productos desde Cloudinary al inicio
+  // Cargar productos desde Cloudinary
   useEffect(() => {
     const loadProducts = async () => {
-      console.log('🔄 Iniciando carga de productos...');
+      console.log('🔄 [FeaturedProducts] Iniciando carga de productos...');
+      console.log('🏷️ [FeaturedProducts] Categoría seleccionada actual:', selectedCategory);
       
       // 1. PRIMERO: Consultar Cloudinary para obtener todas las imágenes
-      const cloudinaryProducts = await getAllImages();
+      // Si hay categoría seleccionada, filtrar por ella
+      const category = selectedCategory !== 'all' ? selectedCategory : undefined;
+      console.log('📤 [FeaturedProducts] Enviando categoría a getAllImages:', category);
+      
+      const cloudinaryProducts = await getAllImages(category);
+      
+      console.log('📦 [FeaturedProducts] Productos recibidos de Cloudinary:', cloudinaryProducts.length);
       
       // 2. Convertir a formato Product para renderizar
       const converted = cloudinaryProducts.map(convertToProduct);
       setProducts(converted);
       
-      console.log('✅ Productos cargados:', converted.length);
+      console.log('✅ [FeaturedProducts] Productos convertidos y cargados en estado:', converted.length);
+      console.log('📋 [FeaturedProducts] IDs de productos:', converted.map(p => p.id));
     };
 
-    // Ejecutar SOLO al montar el componente (primera carga)
     loadProducts();
+  }, [selectedCategory]); // Recargar cuando cambie la categoría
 
+  // Event listeners en useEffect separado para evitar re-registro
+  useEffect(() => {
     // Evento personalizado para recargar productos cuando se agregue/elimine
     const handleProductsChange = () => {
-      console.log('🔔 Evento de cambio detectado, recargando productos...');
-      loadProducts();
+      console.log('🔔 [Event] Evento products-changed detectado');
+      // Forzar recarga completa sin filtro
+      setSelectedCategory('all');
     };
 
-    // Escuchar eventos personalizados de cambio de productos
+    // Evento personalizado para filtrar por categoría desde CategorySection
+    const handleCategorySelected = (event: Event) => {
+      const customEvent = event as CustomEvent<{ category: ProductCategory }>;
+      console.log('🏷️ [Event] Categoría seleccionada desde CategorySection:', customEvent.detail.category);
+      setSelectedCategory(customEvent.detail.category);
+    };
+
+    // Escuchar eventos personalizados
     window.addEventListener('products-changed', handleProductsChange);
+    window.addEventListener('category-selected', handleCategorySelected as EventListener);
 
     return () => {
       window.removeEventListener('products-changed', handleProductsChange);
+      window.removeEventListener('category-selected', handleCategorySelected as EventListener);
     };
-  }, []);
+  }, []); // Solo montar/desmontar, no re-registrar
 
   // Verificar modo admin
   useEffect(() => {
@@ -141,7 +190,7 @@ export function FeaturedProducts() {
   return (
     <section className="py-16 px-4 bg-gray-50" id="productos">
       <div className="container mx-auto">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-2">
             Productos Destacados
           </h2>
@@ -151,11 +200,44 @@ export function FeaturedProducts() {
             </p>
           )}
         </div>
+
+        {/* Filtro de categorías */}
+        <div className="mb-8 flex justify-center">
+          <div className="w-full max-w-md flex items-center gap-3">
+            <Filter className="w-5 h-5 text-gray-500 flex-shrink-0" />
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => setSelectedCategory(value as ProductCategory | 'all')}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Filtrar por categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedCategory !== 'all' && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSelectedCategory('all')}
+                title="Limpiar filtro"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
         
         {products.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">
               No hay productos disponibles
+              {selectedCategory !== 'all' && ` en la categoría ${CATEGORY_LABELS[selectedCategory]}`}
             </p>
             {showAdminButtons && (
               <p className="text-sm text-gray-400">
@@ -164,11 +246,18 @@ export function FeaturedProducts() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products.map((product) => (
-              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow relative">
-                {/* Botón de eliminar - Solo visible en modo admin */}
-                {showAdminButtons && (
+          <>
+            <div className="text-center mb-4 text-sm text-gray-500">
+              Mostrando {products.length} producto(s)
+              {selectedCategory !== 'all' && ` de categoría: ${CATEGORY_LABELS[selectedCategory]}`}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {products.map((product) => {
+                console.log('🎨 [Render] Renderizando producto:', product.id, product.name);
+                return (
+                  <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow relative">
+                    {/* Botón de eliminar - Solo visible en modo admin */}
+                    {showAdminButtons && (
                   <Button
                     variant="destructive"
                     size="icon"
@@ -203,8 +292,10 @@ export function FeaturedProducts() {
                   </Button>
                 </CardFooter>
               </Card>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </section>
