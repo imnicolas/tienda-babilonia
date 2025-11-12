@@ -12,7 +12,7 @@ import {
 } from './ui/sheet';
 
 export function Cart() {
-  const { items, removeFromCart, updateQuantity, totalItems, totalPrice, sendToWhatsApp } = useCart();
+  const { items, removeFromCart, updateQuantity, totalItems, sendToWhatsApp } = useCart();
 
   return (
     <Sheet>
