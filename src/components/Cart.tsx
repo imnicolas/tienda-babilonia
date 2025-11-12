@@ -51,7 +51,8 @@ export function Cart() {
                     />
                     <div className="flex-1">
                       <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-sm text-gray-500">${item.price.toFixed(2)}</p>
+                      {/* PRECIO DESHABILITADO TEMPORALMENTE */}
+                      {/* <p className="text-sm text-gray-500">${item.price.toFixed(2)}</p> */}
                       <div className="flex items-center gap-2 mt-2">
                         <Button
                           variant="outline"
@@ -84,10 +85,13 @@ export function Cart() {
                 ))}
               </div>
               <div className="border-t pt-4 mt-4">
+                {/* TOTAL DESHABILITADO TEMPORALMENTE */}
+                {/* 
                 <div className="flex justify-between text-lg font-semibold mb-4">
                   <span>Total:</span>
                   <span>${totalPrice.toFixed(2)}</span>
                 </div>
+                */}
                 <Button 
                   className="w-full bg-green-600 hover:bg-green-700" 
                   size="lg"

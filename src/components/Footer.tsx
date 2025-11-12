@@ -10,8 +10,12 @@ export function Footer() {
           {/* Brand & Social */}
           <div>
             <div className="flex items-center mb-4 text-white">
-              <ShoppingBag className="h-6 w-6 mr-2" />
-              <span className="text-lg">Babilonia Calzados</span>
+              <img 
+                src="/bc-logo.jpg" 
+                alt="Babilonia Calzados Logo" 
+                className="h-8 w-8 rounded-lg mr-2"
+              />
+              <span className="text-lg font-semibold">Babilonia Calzados</span>
             </div>
             <p className="text-sm mb-4">
               Tu destino confiable para calzado de calidad desde 1985. 

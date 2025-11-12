@@ -28,8 +28,8 @@ export interface ProductData {
   id: string;
   title: string;
   description: string;
-  price: number;
-  image: string; // public_id de Cloudinary (formato: categoria/titulo-precio)
+  // price: number; // TODO: Deshabilitado temporalmente
+  image: string; // public_id de Cloudinary (formato: categoria/titulo)
   category: ProductCategory; // Categoría del producto
   createdAt: string;
 }
@@ -103,10 +103,11 @@ export async function uploadToCloudinary(
 }
 
 /**
- * Genera un slug URL-friendly con título y precio
- * Formato: titulo-del-producto-12999 (precio sin decimales)
+ * Genera un slug URL-friendly solo con el título
+ * Formato: titulo-del-producto
+ * TODO: Precio deshabilitado temporalmente
  */
-export function generateProductSlug(title: string, price: number): string {
+export function generateProductSlug(title: string, price?: number): string {
   const titleSlug = title
     .toLowerCase()
     .normalize('NFD')
@@ -116,18 +117,20 @@ export function generateProductSlug(title: string, price: number): string {
     .replace(/-+/g, '-') // Reemplaza múltiples guiones con uno solo
     .trim();
   
-  // Convertir precio a string sin decimales (ej: 99.99 -> 9999)
-  const priceString = Math.round(price * 100).toString();
+  // DESHABILITADO: Precio en el slug
+  // const priceString = Math.round(price * 100).toString();
+  // return `${titleSlug}-${priceString}`;
   
-  return `${titleSlug}-${priceString}`;
+  return titleSlug;
 }
 
 /**
- * Parsea un Public ID para extraer título, precio y categoría
- * Formato esperado: Home/categoria/titulo-del-producto-12999
- * @returns {title, price, category} o null si no se puede parsear
+ * Parsea un Public ID para extraer título y categoría (SIN PRECIO)
+ * Formato esperado: Home/categoria/titulo-del-producto
+ * @returns {title, category} o null si no se puede parsear
+ * TODO: Precio deshabilitado temporalmente
  */
-export function parseProductId(publicId: string): { title: string; price: number; category: ProductCategory } | null {
+export function parseProductId(publicId: string): { title: string; /* price: number; */ category: ProductCategory } | null {
   try {
     // Separar partes (formato: Home/categoria/titulo-precio)
     const parts = publicId.split('/');
@@ -153,26 +156,21 @@ export function parseProductId(publicId: string): { title: string; price: number
       }
     }
     
-    // Buscar el último segmento numérico del slug
+    // DESHABILITADO: Parsing de precio del slug
+    // const slugParts = productSlug.split('-');
+    // const lastPart = slugParts[slugParts.length - 1];
+    // if (!/^\d+$/.test(lastPart)) return null;
+    // const priceInCents = parseInt(lastPart, 10);
+    // const price = priceInCents / 100;
+    // const titleParts = slugParts.slice(0, -1);
+    
+    // Extraer título (todo el slug)
     const slugParts = productSlug.split('-');
-    const lastPart = slugParts[slugParts.length - 1];
-    
-    // Verificar si el último segmento es un número
-    if (!/^\d+$/.test(lastPart)) {
-      return null;
-    }
-    
-    // Extraer precio (dividir por 100 para obtener decimales)
-    const priceInCents = parseInt(lastPart, 10);
-    const price = priceInCents / 100;
-    
-    // Extraer título (todo excepto el último segmento)
-    const titleParts = slugParts.slice(0, -1);
-    const title = titleParts
+    const title = slugParts
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
     
-    return { title, price, category };
+    return { title, /* price: 0, */ category };
   } catch (error) {
     console.error('Error parsing product ID:', publicId, error);
     return null;

@@ -40,9 +40,13 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center">
-            <ShoppingBag className="h-8 w-8 mr-2" />
-            <span className="text-xl">Babilonia Calzados</span>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img 
+              src="/bc-logo.jpg" 
+              alt="Babilonia Calzados Logo" 
+              className="h-10 w-10 rounded-lg shadow-sm"
+            />
+            <span className="text-xl font-semibold text-gray-900">Babilonia Calzados</span>
           </div>
 
           {/* Desktop Navigation */}

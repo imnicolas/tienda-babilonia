@@ -6,7 +6,7 @@ const CART_STORAGE_KEY = 'babilonia-cart';
 export interface Product {
   id: number;
   name: string;
-  price: number;
+  price: number; // Mantener para compatibilidad pero no se usa actualmente
   image: string;
   category: string;
 }
@@ -117,13 +117,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     items.forEach((item, index) => {
       message += `\n${index + 1}. *${item.name}*\n`;
       message += `   • Cantidad: ${item.quantity}\n`;
-      message += `   • Precio unitario: $${item.price.toFixed(2)}\n`;
-      message += `   • Subtotal: $${(item.price * item.quantity).toFixed(2)}\n`;
+      // DESHABILITADO: Precio en mensaje de WhatsApp
+      // message += `   • Precio unitario: $${item.price.toFixed(2)}\n`;
+      // message += `   • Subtotal: $${(item.price * item.quantity).toFixed(2)}\n`;
     });
     
     message += `\n━━━━━━━━━━━━━━━━━━━\n`;
     message += `*Total de productos:* ${totalItems}\n`;
-    message += `*Total a pagar:* $${totalPrice.toFixed(2)}\n`;
+    // DESHABILITADO: Total a pagar
+    // message += `*Total a pagar:* $${totalPrice.toFixed(2)}\n`;
     message += `\n¡Gracias! 😊`;
 
     // Codificar el mensaje para URL

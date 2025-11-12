@@ -91,28 +91,31 @@ module.exports = async (req, res) => {
       .map(resource => {
         const publicId = resource.public_id;
         
-        // Parsear categoría, título y precio (formato: Home/categoria/titulo-precio)
+        // Parsear categoría y título (formato: Home/categoria/titulo)
         const parts = publicId.split('/');
         let category = 'miscelanea';
         let slug = publicId;
         
-        // Estructura esperada: Home/categoria/titulo-precio
+        // Estructura esperada: Home/categoria/titulo
         if (parts.length >= 3 && parts[0] === 'Home') {
           const categoryPath = parts[1]; // ej: "hombres"
           category = categoryPath; // Usar solo el nombre de la categoría
           slug = parts[parts.length - 1]; // Último segmento es el producto
         } else if (parts.length === 2) {
-          // Formato legacy: categoria/titulo-precio
+          // Formato legacy: categoria/titulo
           category = parts[0].replace('Home/', '');
           slug = parts[1];
         }
         
-        const slugParts = slug.split('-');
-        const priceInCents = parseInt(slugParts[slugParts.length - 1], 10);
-        const price = priceInCents / 100;
+        // DESHABILITADO: Parsing de precio del slug
+        // const slugParts = slug.split('-');
+        // const priceInCents = parseInt(slugParts[slugParts.length - 1], 10);
+        // const price = priceInCents / 100;
+        // const titleParts = slugParts.slice(0, -1);
         
-        const titleParts = slugParts.slice(0, -1);
-        const title = titleParts
+        // Extraer título (todo el slug)
+        const slugParts = slug.split('-');
+        const title = slugParts
           .map(word => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
 
@@ -120,7 +123,7 @@ module.exports = async (req, res) => {
           id: publicId,
           title: title, // Solo el título parseado, NO el public_id
           description: `${title} - Producto de calidad`,
-          price: price,
+          price: 0, // TODO: Precio deshabilitado temporalmente
           image: publicId,
           category: category,
           createdAt: resource.created_at,

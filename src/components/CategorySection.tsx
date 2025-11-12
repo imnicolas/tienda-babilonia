@@ -13,7 +13,7 @@ const categories: Category[] = [
   {
     id: PRODUCT_CATEGORIES.HOMBRES,
     name: 'Hombres',
-    image: 'https://images.unsplash.com/photo-1478408196100-1f7e3c5c3d58?w=600&h=400&fit=crop',
+    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&h=400&fit=crop',
     description: 'Estilo y comodidad para él',
   },
   {

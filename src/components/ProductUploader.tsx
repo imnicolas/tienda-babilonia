@@ -43,7 +43,7 @@ export function ProductUploader() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    price: '',
+    // price: '', // TODO: Deshabilitado temporalmente
     category: PRODUCT_CATEGORIES.MISCELANEA as ProductCategory,
   });
 
@@ -99,16 +99,17 @@ export function ProductUploader() {
       return;
     }
 
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      toast.error('El precio debe ser mayor a 0');
-      return;
-    }
+    // DESHABILITADO: Validación de precio
+    // if (!formData.price || parseFloat(formData.price) <= 0) {
+    //   toast.error('El precio debe ser mayor a 0');
+    //   return;
+    // }
 
     setIsUploading(true);
 
     try {
-      // 1. Generar slug con título y precio (formato: titulo-precio)
-      const slug = generateProductSlug(formData.title, parseFloat(formData.price));
+      // 1. Generar slug solo con título (formato: titulo)
+      const slug = generateProductSlug(formData.title);
       
       // 2. Subir imagen a Cloudinary con categoría
       toast.loading('Subiendo imagen a Cloudinary...', { id: 'upload' });
@@ -119,7 +120,7 @@ export function ProductUploader() {
         id: Date.now().toString(),
         title: formData.title.trim(),
         description: formData.description.trim() || `${formData.title} - Calidad premium`,
-        price: parseFloat(formData.price),
+        // price: parseFloat(formData.price), // TODO: Deshabilitado temporalmente
         image: uploadResult.publicId,
         category: formData.category,
         createdAt: new Date().toISOString(),
@@ -145,7 +146,7 @@ export function ProductUploader() {
       setFormData({ 
         title: '', 
         description: '', 
-        price: '',
+        // price: '', // TODO: Deshabilitado temporalmente
         category: PRODUCT_CATEGORIES.MISCELANEA,
       });
       setSelectedFile(null);
@@ -301,7 +302,8 @@ export function ProductUploader() {
                 />
               </div>
 
-              {/* Precio */}
+              {/* Precio - DESHABILITADO TEMPORALMENTE */}
+              {/* 
               <div className="space-y-2">
                 <Label htmlFor="price">Precio (ARS) *</Label>
                 <Input
@@ -317,9 +319,10 @@ export function ProductUploader() {
                   required
                 />
               </div>
+              */}
 
               {/* Preview del Public ID */}
-              {formData.title && formData.price && (
+              {formData.title && (
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-start gap-2">
                     <ImageIcon className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -328,10 +331,10 @@ export function ProductUploader() {
                         Public ID en Cloudinary:
                       </p>
                       <code className="text-sm text-blue-700 block mb-2">
-                        {formData.category}/{generateProductSlug(formData.title, parseFloat(formData.price))}
+                        {formData.category}/{generateProductSlug(formData.title)}
                       </code>
                       <p className="text-xs text-gray-600 mb-1">
-                        Formato: <strong>categoría/título-precio</strong>
+                        Formato: <strong>categoría/título</strong>
                       </p>
                       <p className="text-xs text-gray-600">
                         Categoría: <strong>{CATEGORY_LABELS[formData.category]}</strong>

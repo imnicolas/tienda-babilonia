@@ -40,7 +40,7 @@ function convertToProduct(productData: ProductData): Product {
   return {
     id: numericId,
     name: productData.title,
-    price: productData.price,
+    price: 0, // TODO: Precio deshabilitado temporalmente
     image: productData.image,
     category: 'general',
   };
@@ -258,7 +258,8 @@ export function FeaturedProducts() {
                   />
                   <div className="p-4">
                     <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-                    <p className="text-2xl font-bold text-green-600">${product.price.toFixed(2)}</p>
+                    {/* PRECIO DESHABILITADO TEMPORALMENTE */}
+                    {/* <p className="text-2xl font-bold text-green-600">${product.price.toFixed(2)}</p> */}
                   </div>
                 </CardContent>
                 <CardFooter className="p-4 pt-0">
