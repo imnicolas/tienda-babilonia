@@ -309,8 +309,11 @@ export async function invalidateBackendCache(): Promise<void> {
  */
 export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
   try {
-    // Usar el backend (local o Vercel)
-    const response = await fetch(`${API_BASE_URL}/api/products/${publicId}`, {
+    // Codificar el publicId para la URL (escapar caracteres especiales y barras)
+    const encodedPublicId = encodeURIComponent(publicId);
+    
+    // Usar el backend (local o Vercel) con query parameter
+    const response = await fetch(`${API_BASE_URL}/api/delete-product?publicId=${encodedPublicId}`, {
       method: 'DELETE',
     });
     

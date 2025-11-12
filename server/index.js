@@ -184,7 +184,56 @@ app.get('/api/products', async (req, res) => {
 });
 
 // ======================================
-// 🗑️ DELETE /api/products/:publicId - Eliminar producto
+// 🗑️ DELETE /api/delete-product - Eliminar producto (con query parameter)
+// ======================================
+app.delete('/api/delete-product', async (req, res) => {
+  try {
+    const { publicId } = req.query;
+
+    if (!publicId) {
+      return res.status(400).json({
+        success: false,
+        error: 'publicId es requerido',
+      });
+    }
+
+    console.log(`🗑️ Intentando eliminar: ${publicId}`);
+
+    // Eliminar de Cloudinary
+    const result = await cloudinary.uploader.destroy(publicId);
+
+    if (result.result === 'ok') {
+      console.log(`✅ Producto eliminado: ${publicId}`);
+      
+      // Invalidar caché
+      productsCache = null;
+      cacheTimestamp = null;
+      
+      res.json({
+        success: true,
+        message: 'Producto eliminado exitosamente',
+        result: result,
+      });
+    } else {
+      console.warn(`⚠️ No se pudo eliminar: ${publicId}`, result);
+      res.status(404).json({
+        success: false,
+        error: 'Producto no encontrado o ya eliminado',
+        result: result,
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Error al eliminar producto:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error al eliminar producto',
+    });
+  }
+});
+
+// ======================================
+// 🗑️ DELETE /api/products/:publicId - Eliminar producto (ruta legacy)
 // ======================================
 app.delete('/api/products/:publicId', async (req, res) => {
   try {
@@ -321,7 +370,8 @@ app.listen(PORT, () => {
 ║   • GET    /api/health                               ║
 ║   • GET    /api/products                             ║
 ║   • GET    /api/products/:publicId                   ║
-║   • DELETE /api/products/:publicId                   ║
+║   • DELETE /api/delete-product?publicId=...          ║
+║   • POST   /api/cache/invalidate                     ║
 ║                                                       ║
 ╚═══════════════════════════════════════════════════════╝
   `);
