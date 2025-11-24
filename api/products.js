@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
     // Filtrar y parsear productos
     const products = result.resources
       .filter(resource => {
-        // Extraer el slug sin Home y categoría (formato: Home/categoria/titulo-precio)
+        // Extraer el slug sin Home y categoría (formato: Home/categoria/titulo)
         const parts = resource.public_id.split('/');
         if (parts.length < 3) return false; // Debe tener al menos: Home/categoria/producto
         
@@ -83,10 +83,8 @@ module.exports = async (req, res) => {
           }
         }
         
-        const slug = parts[parts.length - 1]; // Último segmento es el producto
-        const slugParts = slug.split('-');
-        const lastPart = slugParts[slugParts.length - 1];
-        return /^\d+$/.test(lastPart); // Último segmento debe ser numérico
+        // Aceptar todos los productos sin validar formato de precio
+        return true;
       })
       .map(resource => {
         const publicId = resource.public_id;
