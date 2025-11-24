@@ -34,6 +34,95 @@ const CATEGORY_LABELS: Record<ProductCategory, string> = {
   [PRODUCT_CATEGORIES.MISCELANEA]: 'Miscelánea',
 };
 
+// Configuración de redimensionamiento
+const TARGET_WIDTH = 1600;
+const TARGET_HEIGHT = 1500;
+
+/**
+ * Redimensiona una imagen a las dimensiones especificadas manteniendo la proporción
+ * @param file Archivo de imagen original
+ * @returns Promise con el archivo redimensionado
+ */
+const resizeImage = (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        // Crear canvas con las dimensiones objetivo
+        const canvas = document.createElement('canvas');
+        canvas.width = TARGET_WIDTH;
+        canvas.height = TARGET_HEIGHT;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject(new Error('No se pudo crear el contexto del canvas'));
+          return;
+        }
+        
+        // Calcular dimensiones manteniendo proporción
+        const sourceAspect = img.width / img.height;
+        const targetAspect = TARGET_WIDTH / TARGET_HEIGHT;
+        
+        let drawWidth = TARGET_WIDTH;
+        let drawHeight = TARGET_HEIGHT;
+        let offsetX = 0;
+        let offsetY = 0;
+        
+        if (sourceAspect > targetAspect) {
+          // Imagen más ancha - ajustar por altura
+          drawHeight = TARGET_HEIGHT;
+          drawWidth = TARGET_HEIGHT * sourceAspect;
+          offsetX = (TARGET_WIDTH - drawWidth) / 2;
+        } else {
+          // Imagen más alta - ajustar por anchura
+          drawWidth = TARGET_WIDTH;
+          drawHeight = TARGET_WIDTH / sourceAspect;
+          offsetY = (TARGET_HEIGHT - drawHeight) / 2;
+        }
+        
+        // Fondo blanco
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+        
+        // Dibujar imagen centrada
+        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+        
+        // Convertir canvas a blob
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Error al procesar la imagen'));
+            return;
+          }
+          
+          // Crear nuevo archivo con el blob
+          const resizedFile = new File(
+            [blob], 
+            file.name, 
+            { type: 'image/jpeg', lastModified: Date.now() }
+          );
+          
+          resolve(resizedFile);
+        }, 'image/jpeg', 0.92); // Calidad 92%
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Error al cargar la imagen'));
+      };
+      
+      img.src = e.target?.result as string;
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Error al leer el archivo'));
+    };
+    
+    reader.readAsDataURL(file);
+  });
+};
+
 export function ProductUploader() {
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
@@ -47,7 +136,7 @@ export function ProductUploader() {
     category: PRODUCT_CATEGORIES.MISCELANEA as ProductCategory,
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -57,20 +146,33 @@ export function ProductUploader() {
       return;
     }
 
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('La imagen no debe superar los 5MB');
+    // Validar tamaño (máximo 10MB para el archivo original)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('La imagen no debe superar los 10MB');
       return;
     }
 
-    setSelectedFile(file);
-    
-    // Crear preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Mostrar mensaje de procesamiento
+      toast.loading('Procesando imagen...', { id: 'resize' });
+      
+      // Redimensionar imagen a 1600x1500
+      const resizedFile = await resizeImage(file);
+      
+      toast.success(`Imagen redimensionada a ${TARGET_WIDTH}x${TARGET_HEIGHT}px`, { id: 'resize' });
+      
+      setSelectedFile(resizedFile);
+      
+      // Crear preview con la imagen redimensionada
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(resizedFile);
+    } catch (error) {
+      console.error('Error al procesar imagen:', error);
+      toast.error('Error al procesar la imagen. Intenta con otra.', { id: 'resize' });
+    }
   };
 
   const handleInputChange = (
@@ -210,8 +312,11 @@ export function ProductUploader() {
                       <p className="mb-2 text-sm text-gray-500">
                         <span className="font-semibold">Click para subir</span> o arrastra una imagen
                       </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, WEBP (Máximo 5MB)
+                      <p className="text-xs text-gray-500 mb-1">
+                        PNG, JPG, WEBP (Máximo 10MB)
+                      </p>
+                      <p className="text-xs text-blue-600 font-medium">
+                        ✨ Se redimensionará automáticamente a {TARGET_WIDTH}x{TARGET_HEIGHT}px
                       </p>
                     </div>
                     <input

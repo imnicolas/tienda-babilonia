@@ -23,7 +23,7 @@ export function Hero() {
       <div 
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=1600&q=80)',
+          backgroundImage: 'url(/banner-v1.jpg)',
         }}
       >
         {/* Overlay con gradiente del color de marca (rojo) */}
@@ -78,11 +78,11 @@ export function Hero() {
         <div className="mt-12 flex flex-wrap justify-center gap-6 text-white/90">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-white rounded-full"></div>
-            <span className="text-sm font-medium">Envíos a todo el país</span>
+            <span className="text-sm font-medium">Buenos precios</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-white rounded-full"></div>
-            <span className="text-sm font-medium">Atención personalizada</span>
+            <span className="text-sm font-medium">Buena atención</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-white rounded-full"></div>

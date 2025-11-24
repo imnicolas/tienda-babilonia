@@ -18,7 +18,7 @@ export function Footer() {
               <span className="text-lg font-semibold">Babilonia Calzados</span>
             </div>
             <p className="text-sm mb-4">
-              Tu destino confiable para calzado de calidad desde 1985. 
+              Tu destino confiable para calzado de calidad desde 2000. 
               Dale estilo a tus pasos con nuestra colección seleccionada.
             </p>
             <div className="flex gap-4">
@@ -38,11 +38,11 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 flex-shrink-0" />
-                <span>+54 9 34 1354-3521</span>
+                <span>+54 9 34 1676-1551</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <span>info@babiloniacalzados.com.ar</span>
+                <span>Babiloniacalzados2000@gmail.com</span>
               </li>
             </ul>
           </div>

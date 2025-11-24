@@ -11,12 +11,12 @@ const StoreMap: React.FC = () => {
           </p>
           <p className="text-gray-600 mb-2">
             <span className="font-semibold">📞 Teléfono:</span>{' '}
-            <a href="tel:+5493413543521" className="text-blue-600 hover:underline">
-              +54 9 341 354-3521
+            <a href="tel:+5493416761551" className="text-blue-600 hover:underline">
+              +54 9 34 1676-1551
             </a>
           </p>
           <p className="text-gray-600">
-            <span className="font-semibold">🕒 Horarios:</span> Lun-Vie 9:00-18:00 | Sáb 9:00-17:00
+            <span className="font-semibold">🕒 Horarios:</span> Lun-Vie 9:00-13:00 y 17:30-19:00
           </p>
         </div>
 

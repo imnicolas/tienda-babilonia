@@ -24,41 +24,44 @@ export const CLOUDINARY_CONFIG = {
     thumbnail: {
       w: 150,
       h: 150,
-      c: 'fill',
-      g: 'auto',
-      q: 'auto',
-      f: 'auto'
+      c: 'pad',        // 'pad' agrega relleno para mantener proporción
+      b: 'white',      // Fondo blanco para el padding
+      g: 'center',     // Centrar la imagen
+      q: 'auto:best',  // Calidad automática óptima
+      f: 'auto'        // Formato automático (WebP si es soportado)
     },
     productCard: {
       w: 400,
       h: 400,
-      c: 'fill',
-      g: 'auto',
-      q: 'auto',
-      f: 'auto'
+      c: 'pad',        // 'pad' mantiene toda la imagen visible
+      b: 'white',      // Fondo blanco para el padding
+      g: 'center',     // Centrar la imagen
+      q: 'auto:best',  // Calidad automática óptima
+      f: 'auto'        // Formato automático
     },
     productDetail: {
       w: 800,
       h: 800,
-      c: 'fill',
-      g: 'auto',
-      q: 'auto',
-      f: 'auto'
+      c: 'pad',        // 'pad' para vista detallada sin cortes
+      b: 'white',      // Fondo blanco
+      g: 'center',     // Centrar
+      q: 'auto:best',  // Máxima calidad
+      f: 'auto'        // Formato automático
     },
     banner: {
       w: 1920,
       h: 600,
-      c: 'fill',
-      g: 'auto',
-      q: 'auto',
+      c: 'fill',       // 'fill' para banners (recorte inteligente)
+      g: 'auto',       // Gravedad automática (detecta sujeto principal)
+      q: 'auto:best',
       f: 'auto'
     },
     hero: {
       w: 1920,
       h: 800,
       c: 'fill',
-      g: 'center',
-      q: 'auto',
+      g: 'auto',       // Detección automática del sujeto
+      q: 'auto:best',
       f: 'auto'
     }
   }

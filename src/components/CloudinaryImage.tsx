@@ -109,7 +109,8 @@ export const ProductImage: React.FC<{
   alt: string;
   size?: 'thumbnail' | 'card' | 'detail';
   className?: string;
-}> = ({ productId, alt, size = 'card', className }) => {
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+}> = ({ productId, alt, size = 'card', className, objectFit = 'contain' }) => {
   // Cuando subes una imagen a la carpeta "productos/" en Cloudinary,
   // el Public ID que Cloudinary asigna YA incluye la carpeta: "productos/zapatos-clasicos-cuero"
   // Por lo tanto, aquí pasamos el productId directamente SIN agregar la carpeta
@@ -126,7 +127,7 @@ export const ProductImage: React.FC<{
       publicId={publicId}
       alt={alt}
       transformation={transformationMap[size]}
-      className={className}
+      className={`${className} ${objectFit === 'contain' ? 'object-contain' : 'object-cover'}`}
     />
   );
 };

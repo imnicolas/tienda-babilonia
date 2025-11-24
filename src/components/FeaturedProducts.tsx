@@ -249,13 +249,16 @@ export function FeaturedProducts() {
                 )}
                 
                 <CardContent className="p-0">
-                  {/* 🖼️ Componente de imagen de Cloudinary */}
-                  <ProductImage
-                    productId={product.image}
-                    alt={product.name}
-                    size="card"
-                    className="w-full h-64"
-                  />
+                  {/* 🖼️ Componente de imagen de Cloudinary con proporciones correctas */}
+                  <div className="w-full aspect-[16/15] bg-gray-50 flex items-center justify-center overflow-hidden">
+                    <ProductImage
+                      productId={product.image}
+                      alt={product.name}
+                      size="card"
+                      className="w-full h-full"
+                      objectFit="contain"
+                    />
+                  </div>
                   <div className="p-4">
                     <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
                     {/* PRECIO DESHABILITADO TEMPORALMENTE */}
