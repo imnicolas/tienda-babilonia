@@ -228,18 +228,28 @@ export function ProductUploader() {
         createdAt: new Date().toISOString(),
       };
 
-      // 4. Guardar en localStorage
-      saveProduct(newProduct);
+      toast.success('¡Imagen subida a Cloudinary!', { id: 'upload' });
+
+      // 4. LIMPIAR localStorage para forzar recarga desde Cloudinary
+      localStorage.removeItem('babilonia-products');
 
       // 5. Invalidar caché del backend
       await invalidateBackendCache();
 
       // 6. Sincronizar con Cloudinary (refrescar desde la fuente de verdad)
-      toast.loading('Sincronizando con Cloudinary...', { id: 'sync' });
-      await getAllImages();
-      toast.success('Producto sincronizado', { id: 'sync' });
-
-      toast.success('¡Producto creado exitosamente!', { id: 'upload' });
+      toast.loading('Sincronizando productos desde Cloudinary...', { id: 'sync' });
+      
+      // Esperar un poco para que Cloudinary indexe la nueva imagen
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Recargar TODOS los productos desde Cloudinary CON FORCE REFRESH
+      const allProducts = await getAllImages(undefined, true);
+      
+      if (allProducts.length > 0) {
+        toast.success(`${allProducts.length} productos sincronizados`, { id: 'sync' });
+      } else {
+        toast.warning('Sincronización completada', { id: 'sync' });
+      }
 
       // 7. Disparar evento para notificar a otros componentes
       window.dispatchEvent(new CustomEvent('products-changed'));

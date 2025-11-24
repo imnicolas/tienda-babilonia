@@ -195,8 +195,9 @@ export function generateSlug(title: string): string {
  * FUNCIÓN PRINCIPAL: Obtiene todas las imágenes desde Cloudinary
  * Esta función ahora usa el backend local o Vercel Serverless Functions
  * @param category - Filtrar por categoría específica (opcional)
+ * @param forceRefresh - Forzar recarga sin usar caché (opcional)
  */
-export async function getAllImages(category?: ProductCategory): Promise<ProductData[]> {
+export async function getAllImages(category?: ProductCategory, forceRefresh: boolean = false): Promise<ProductData[]> {
   try {
     // Convertir categoría de "Home/nombre" a "nombre" para la API
     let apiCategory: string | undefined;
@@ -205,11 +206,18 @@ export async function getAllImages(category?: ProductCategory): Promise<ProductD
     }
     
     // Usar el backend (local o Vercel) con filtro de categoría si se proporciona
+    // Agregar timestamp para evitar caché del navegador cuando forceRefresh=true
+    const timestamp = forceRefresh ? `&_t=${Date.now()}` : '';
     const url = apiCategory 
-      ? `${API_BASE_URL}/api/products?category=${apiCategory}`
-      : `${API_BASE_URL}/api/products`;
+      ? `${API_BASE_URL}/api/products?category=${apiCategory}${timestamp}`
+      : `${API_BASE_URL}/api/products?_nocache=1${timestamp}`;
     
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      cache: forceRefresh ? 'no-store' : 'default',
+      headers: {
+        'Cache-Control': forceRefresh ? 'no-cache' : 'default'
+      }
+    });
     
     if (!response.ok) {
       return getProducts(category);

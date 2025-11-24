@@ -86,9 +86,12 @@ export function FeaturedProducts() {
   // Event listeners en useEffect separado para evitar re-registro
   useEffect(() => {
     // Evento personalizado para recargar productos cuando se agregue/elimine
-    const handleProductsChange = () => {
-      // Forzar recarga completa sin filtro
-      setSelectedCategory('all');
+    const handleProductsChange = async () => {
+      // FORZAR recarga completa desde Cloudinary sin caché
+      const category = selectedCategory !== 'all' ? selectedCategory : undefined;
+      const freshProducts = await getAllImages(category, true);
+      const converted = freshProducts.map(convertToProduct);
+      setProducts(converted);
     };
 
     // Evento personalizado para filtrar por categoría desde CategorySection
@@ -105,7 +108,7 @@ export function FeaturedProducts() {
       window.removeEventListener('products-changed', handleProductsChange);
       window.removeEventListener('category-selected', handleCategorySelected as EventListener);
     };
-  }, []); // Solo montar/desmontar, no re-registrar
+  }, [selectedCategory]); // Incluir selectedCategory para tener acceso al valor actual
 
   // Verificar modo admin
   useEffect(() => {
